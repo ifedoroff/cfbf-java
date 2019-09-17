@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'idea'
 }
 
 group 'com.ifedorov'
@@ -12,5 +13,14 @@ repositories {
 }
 
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+    testImplementation('org.junit.jupiter:junit-jupiter:5.5.2')
+    compile('com.google.guava:guava:28.0-jre')
+    compile('org.apache.commons:commons-lang3:3.9')
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
 }
