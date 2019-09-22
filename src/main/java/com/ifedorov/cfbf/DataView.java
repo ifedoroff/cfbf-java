@@ -1,15 +1,32 @@
 package com.ifedorov.cfbf;
 
+import com.google.common.collect.Streams;
+import com.google.common.io.ByteStreams;
 import org.apache.commons.lang3.ArrayUtils;
+import sun.misc.IOUtils;
+
+import javax.xml.crypto.Data;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 public interface DataView {
     DataView writeAt(int position, byte[] bytes);
     int getSize();
     byte[] getData();
     DataView subView(int start, int end);
+    DataView subView(int start);
     DataView allocate(int length);
     static DataView empty() {
         return new SimpleDataView();
+    }
+
+    static DataView from(InputStream is) {
+        try {
+            return DataView.from(ByteStreams.toByteArray(is));
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to read from InputStream", e);
+        }
     }
 
     static DataView from(byte[] data) {
@@ -47,13 +64,35 @@ public interface DataView {
         public DataView subView(int start, int end) {
             int dataStart = 0;
             int dataEnd = data == null ? 0 : data.length;
+            if(end < start) {
+                throw new IndexOutOfBoundsException(String.format("end < start (%s < %s)", end, start));
+            }
             if(start < dataStart) {
                 throw new IndexOutOfBoundsException(String.format("subView start: %s, view start: %s", start, dataStart));
             }
             if(end > dataEnd) {
                 throw new IndexOutOfBoundsException(String.format("subView end: %s, view end: %s", end, dataEnd));
             }
+            if(start > dataEnd) {
+                throw new IndexOutOfBoundsException(String.format("subView start: %s, view end: %s", start, dataEnd));
+            }
+            if(end < dataStart) {
+                throw new IndexOutOfBoundsException(String.format("subView end: %s, view start: %s", end, dataStart));
+            }
             return new SubView(start, end);
+        }
+
+        @Override
+        public DataView subView(int start) {
+            int dataStart = 0;
+            int dataEnd = data == null ? 0 : data.length;
+            if(start < dataStart) {
+                throw new IndexOutOfBoundsException(String.format("subView start: %s, view start: %s", start, dataStart));
+            }
+            if(start > dataEnd) {
+                throw new IndexOutOfBoundsException(String.format("subView start: %s, view end: %s", start, dataEnd));
+            }
+            return new SubView(start, data.length);
         }
 
         public DataView allocate(int length) {
@@ -96,13 +135,35 @@ public interface DataView {
 
             @Override
             public DataView subView(int start, int end) {
-                if(start < this.start) {
-                    throw new IndexOutOfBoundsException(String.format("subView start: %s, view start: %s", start, this.start));
+                if(end < start) {
+                    throw new IndexOutOfBoundsException(String.format("end < start (%s < %s)", end, start));
                 }
-                if(end > this.end) {
-                    throw new IndexOutOfBoundsException(String.format("subView end: %s, view end: %s", end, this.end));
+                if(start < 0) {
+                    throw new IndexOutOfBoundsException(String.format("subView start: %s, view start: %s", start, 0));
+                }
+                if(end > this.capacity) {
+                    throw new IndexOutOfBoundsException(String.format("subView end: %s, view end: %s", end, this.capacity));
+                }
+                if(start > this.capacity) {
+                    throw new IndexOutOfBoundsException(String.format("subView start: %s, view end: %s", start, this.capacity));
+                }
+                if(end < 0) {
+                    throw new IndexOutOfBoundsException(String.format("subView end: %s, view start: %s", end, 0));
                 }
                 return new SubView(this.start + start, this.start + end);
+            }
+
+            @Override
+            public DataView subView(int start) {
+                int dataStart = 0;
+                int dataEnd = capacity;
+                if(start < dataStart) {
+                    throw new IndexOutOfBoundsException(String.format("subView start: %s, view start: %s", start, dataStart));
+                }
+                if(start > dataEnd) {
+                    throw new IndexOutOfBoundsException(String.format("subView start: %s, view end: %s", start, dataEnd));
+                }
+                return new SubView(this.start + start, end);
             }
 
             @Override

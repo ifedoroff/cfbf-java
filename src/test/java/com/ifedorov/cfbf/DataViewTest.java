@@ -36,6 +36,12 @@ public class DataViewTest {
         assertArrayEquals(firstPart, dataView.subView(0, 50).getData());
         assertArrayEquals(secondPart, dataView.subView(50, 100).getData());
         assertThrows(UnsupportedOperationException.class, () -> dataView.subView(0, 10).allocate(10));
+        assertThrows(IndexOutOfBoundsException.class, () -> dataView.subView(1, 0));
+        assertThrows(IndexOutOfBoundsException.class, () -> dataView.subView(101));
+        assertThrows(IndexOutOfBoundsException.class, () -> dataView.subView(-1));
+        assertThrows(IndexOutOfBoundsException.class, () -> dataView.subView(0, 10).subView(-1));
+        assertThrows(IndexOutOfBoundsException.class, () -> dataView.subView(0, 10).subView(11));
+        assertEquals(10, dataView.subView(50, 100).subView(0, 10).getSize());
     }
 
 }
