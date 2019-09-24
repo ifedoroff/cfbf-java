@@ -4,18 +4,18 @@ import com.ifedorov.cfbf.*;
 
 import java.util.List;
 
-public class MiniStreamReader implements StreamReader {
+public class MiniStreamRW implements StreamRW {
 
     private final MiniFAT miniFAT;
-    private List<Sector> miniStreamSectors;
-    private final Sectors sectors;
+    private List<Integer> miniStreamSectorChain;
+    private final CompoundFile compoundFile;
     private int miniSectorSize;
     private int sectorSize;
 
-    public MiniStreamReader(MiniFAT miniFAT, List<Sector> miniStreamSectors, Sectors sectors, int miniSectorSize, int sectorSize) {
+    public MiniStreamRW(MiniFAT miniFAT, List<Integer> miniStreamSectorChain, CompoundFile compoundFile, int miniSectorSize, int sectorSize) {
         this.miniFAT = miniFAT;
-        this.miniStreamSectors = miniStreamSectors;
-        this.sectors = sectors;
+        this.miniStreamSectorChain = miniStreamSectorChain;
+        this.compoundFile = compoundFile;
         this.miniSectorSize = miniSectorSize;
         this.sectorSize = sectorSize;
     }
@@ -41,6 +41,11 @@ public class MiniStreamReader implements StreamReader {
     private DataView getMiniSectorData(int position) {
         int sectorPosition = position * miniSectorSize / sectorSize;
         int shiftInsideSector = position * miniSectorSize % sectorSize;
-        return miniStreamSectors.get(sectorPosition).subView(shiftInsideSector, shiftInsideSector + miniSectorSize);
+        return compoundFile.sector(miniStreamSectorChain.get(sectorPosition)).subView(shiftInsideSector, shiftInsideSector + miniSectorSize);
+    }
+
+    @Override
+    public int write(byte[] data) {
+        throw new UnsupportedOperationException("Not supported yet");
     }
 }

@@ -21,7 +21,9 @@ class DirectoryEntryChainTest {
         Sector secondSector = mock(Sector.class);
         when(secondSector.subView(0, DirectoryEntry.ENTRY_LENGTH)).thenReturn(DataView.from(DirectoryEntryTest.dummyDirectoryEntry()));
         when(firstSector.subView(DirectoryEntry.ENTRY_LENGTH * 3, DirectoryEntry.ENTRY_LENGTH * 4)).thenReturn(DataView.from(DirectoryEntryTest.dummyDirectoryEntry()));
-        DirectoryEntryChain directoryEntryChain = new DirectoryEntryChain(Lists.newArrayList(firstSector, secondSector), streamReader);
+        when(compoundFile.sector(0)).thenReturn(firstSector);
+        when(compoundFile.sector(1)).thenReturn(secondSector);
+        DirectoryEntryChain directoryEntryChain = new DirectoryEntryChain(compoundFile, Lists.newArrayList(0, 1), streamReader);
         directoryEntryChain.getEntryById(4);
         verify(secondSector, times(1)).subView(0, DirectoryEntry.ENTRY_LENGTH);
         directoryEntryChain.getEntryById(3);

@@ -7,11 +7,13 @@ import java.util.List;
 
 public class AllocationTable {
 
-    private final List<Sector> sectors;
+    private final CompoundFile compoundFile;
+    private final List<Integer> sectorChain;
     private final int sectorSize;
 
-    public AllocationTable(List<Sector> allocationSectors, int sectorSize) {
-        this.sectors = allocationSectors;
+    public AllocationTable(CompoundFile compoundFile, List<Integer> sectorChain, int sectorSize) {
+        this.compoundFile = compoundFile;
+        this.sectorChain = sectorChain;
         this.sectorSize = sectorSize;
     }
 
@@ -27,7 +29,7 @@ public class AllocationTable {
     private int getValueAt(int position) {
         int sectorNumber = position * 4 / sectorSize;
         int shiftInsideSector = position * 4 % sectorSize;
-        Verify.verify(sectorNumber <= sectors.size());
-        return Utils.toInt(sectors.get(sectorNumber).subView(shiftInsideSector, shiftInsideSector + 4).getData());
+        Verify.verify(sectorNumber <= sectorChain.size());
+        return Utils.toInt(compoundFile.sector(sectorChain.get(sectorNumber)).subView(shiftInsideSector, shiftInsideSector + 4).getData());
     }
 }

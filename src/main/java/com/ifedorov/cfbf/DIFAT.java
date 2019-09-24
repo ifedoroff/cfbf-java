@@ -9,12 +9,12 @@ import java.util.stream.Stream;
 
 public class DIFAT {
 
-    private Sectors sectors;
+    private CompoundFile compoundFile;
     private Header header;
     private List<Sector> difatSectors = Lists.newArrayList();
 
-    public DIFAT(Sectors sectors, Header header) {
-        this.sectors = sectors;
+    public DIFAT(CompoundFile compoundFile, Header header) {
+        this.compoundFile = compoundFile;
         this.header = header;
         readDifatSectors();
     }
@@ -22,11 +22,11 @@ public class DIFAT {
     private void readDifatSectors() {
         int firstDifatSectorLocation = header.getFirstDifatSectorLocation();
         if(!Utils.isEndOfChain(firstDifatSectorLocation)) {
-            Sector lastSector = sectors.sector(firstDifatSectorLocation);
+            Sector lastSector = compoundFile.sector(firstDifatSectorLocation);
             difatSectors.add(lastSector);
             int nextSectorPosition = -1;
             while(!Utils.isEndOfChain(nextSectorPosition = Utils.toInt(lastSector.subView(header.getSectorShift() - 4, header.getSectorShift()).getData()))) {
-                difatSectors.add(lastSector = sectors.sector(nextSectorPosition));
+                difatSectors.add(lastSector = compoundFile.sector(nextSectorPosition));
             }
         }
     }

@@ -1,13 +1,9 @@
 package com.ifedorov.cfbf;
 
-import com.google.common.base.Verify;
-import com.google.common.collect.Lists;
-import com.ifedorov.cfbf.stream.ConditionalStreamReader;
-import com.ifedorov.cfbf.stream.MiniStreamReader;
-import com.ifedorov.cfbf.stream.RegularStreamReader;
+import com.ifedorov.cfbf.stream.ConditionalStreamRW;
+import com.ifedorov.cfbf.stream.MiniStreamRW;
+import com.ifedorov.cfbf.stream.RegularStreamRW;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.stream.Collectors;
 
 public class CompoundFile {
@@ -24,19 +20,15 @@ public class CompoundFile {
         this.dataView = dataView;
         this.header = new Header(dataView.subView(0, Header.HEADER_LENGTH));
         this.sectors = new Sectors(dataView, header.getSectorShift());
-        difat = new DIFAT(sectors, header);
-        fat = new FAT(difat.getFatSectorChain().stream().map((num) -> sectors.sector(num)).collect(Collectors.toList()), header.getSectorShift());
-        miniFat = new MiniFAT(fat.buildChain(header.getFirstMinifatSectorLocation()).stream().map((num) -> sectors.sector(num)).collect(Collectors.toList()), header.getSectorShift());
-        ConditionalStreamReader streamReader = new ConditionalStreamReader(
-                new RegularStreamReader(fat, sectors),
-                new MiniStreamReader(miniFat, fat.buildChain(getMiniStreamFirstSectorLocation()).stream().map((num) -> sectors.sector(num)).collect(Collectors.toList()),sectors, header.getMiniSectorShift(), header.getSectorShift()),
+        difat = new DIFAT(this, header);
+        fat = new FAT(this, difat.getFatSectorChain(), header.getSectorShift());
+        miniFat = new MiniFAT(this, fat.buildChain(header.getFirstMinifatSectorLocation()), header.getSectorShift());
+        ConditionalStreamRW streamReader = new ConditionalStreamRW(
+                new RegularStreamRW(fat, this),
+                new MiniStreamRW(miniFat, fat.buildChain(getMiniStreamFirstSectorLocation()),this, header.getMiniSectorShift(), header.getSectorShift()),
                 header.getMiniStreamCutoffSize()
         );
-        directoryEntryChain = new DirectoryEntryChain(fat.buildChain(header.getFirstDirectorySectorLocation()).stream().map((num) -> sectors.sector(num)).collect(Collectors.toList()), streamReader);
-    }
-
-    public Header header() {
-        return header;
+        directoryEntryChain = new DirectoryEntryChain(this, fat.buildChain(header.getFirstDirectorySectorLocation()).stream().collect(Collectors.toList()), streamReader);
     }
 
     private int getMiniStreamFirstSectorLocation() {
@@ -45,6 +37,10 @@ public class CompoundFile {
 
     public DirectoryEntry getRootStorage() {
         return directoryEntryChain.getEntryById(0);
+    }
+
+    public Sector sector(int position) {
+        return this.sectors.sector(position);
     }
 
 }

@@ -1,17 +1,17 @@
 package com.ifedorov.cfbf.stream;
 
+import com.ifedorov.cfbf.CompoundFile;
 import com.ifedorov.cfbf.FAT;
 import com.ifedorov.cfbf.Sector;
-import com.ifedorov.cfbf.Sectors;
 
-public class RegularStreamReader implements StreamReader{
+public class RegularStreamRW implements StreamRW {
 
     private final FAT fat;
-    private final Sectors sectors;
+    private final CompoundFile compoundFile;
 
-    public RegularStreamReader(FAT fat, Sectors sectors) {
+    public RegularStreamRW(FAT fat, CompoundFile compoundFile) {
         this.fat = fat;
-        this.sectors = sectors;
+        this.compoundFile = compoundFile;
     }
 
     @Override
@@ -20,7 +20,7 @@ public class RegularStreamReader implements StreamReader{
         int positionInResult = 0;
         for (Integer sectorPosition : fat.buildChain(startingSector)) {
             if(length > 0) {
-                Sector sector = sectors.sector(sectorPosition);
+                Sector sector = compoundFile.sector(sectorPosition);
                 int bytesToRead = Math.min(sector.getSize(), length);
                 System.arraycopy(sector.subView(0, bytesToRead).getData(), 0, result, positionInResult, bytesToRead);
                 positionInResult += bytesToRead;
@@ -30,5 +30,10 @@ public class RegularStreamReader implements StreamReader{
             }
         }
         return result;
+    }
+
+    @Override
+    public int write(byte[] data) {
+        throw new UnsupportedOperationException("Not supported yet");
     }
 }

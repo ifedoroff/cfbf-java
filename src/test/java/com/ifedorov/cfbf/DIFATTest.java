@@ -15,7 +15,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class DIFATTest {
 
-    @Mock Sectors sectors;
+    @Mock CompoundFile compoundFile;
     @Mock Header header;
 
     @BeforeEach
@@ -33,15 +33,15 @@ class DIFATTest {
         secondSector.subView(0, 4).writeAt(0, Utils.toBytes(0, 4));
         secondSector.subView(4, 8).writeAt(0, Utils.ENDOFCHAIN_MARK);
         secondSector.subView(508).writeAt(0, Utils.ENDOFCHAIN_MARK);
-        when(sectors.sector(0)).thenReturn(firstSector);
-        when(sectors.sector(1)).thenReturn(secondSector);
-        assertEquals(237, new DIFAT(sectors, header).getFatSectorChain().size());
+        when(compoundFile.sector(0)).thenReturn(firstSector);
+        when(compoundFile.sector(1)).thenReturn(secondSector);
+        assertEquals(237, new DIFAT(compoundFile, header).getFatSectorChain().size());
     }
 
     @Test
     void testCreationWithNoSectors() {
         when(header.getDifatEntries()).thenReturn(IntStream.range(0, 100).boxed().collect(Collectors.toList()));
         when(header.getFirstDifatSectorLocation()).thenReturn(Utils.toInt(Utils.ENDOFCHAIN_MARK));
-        assertEquals(100, new DIFAT(sectors, header).getFatSectorChain().size());
+        assertEquals(100, new DIFAT(compoundFile, header).getFatSectorChain().size());
     }
 }

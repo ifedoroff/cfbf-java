@@ -12,10 +12,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class MiniStreamReaderTest {
+class MiniStreamRWTest {
 
     @Mock MiniFAT miniFAT;
-    @Mock Sectors sectors;
+    @Mock CompoundFile compoundFile;
 
     @Test
     void testRead() {
@@ -33,8 +33,10 @@ class MiniStreamReaderTest {
         byte[] secondSectorData = new byte[512];
         System.arraycopy(Utils.initializedWith(64, 8), 0, secondSectorData, 0, 64);
         Sector secondSector = Sector.from(DataView.from(secondSectorData), 1);
-        MiniStreamReader miniStreamReader = new MiniStreamReader(miniFAT, Lists.newArrayList(firstSector, secondSector), sectors, 64, 512);
-        byte[] result = miniStreamReader.read(0, 516);
+        when(compoundFile.sector(0)).thenReturn(firstSector);
+        when(compoundFile.sector(1)).thenReturn(secondSector);
+        MiniStreamRW miniStreamRW = new MiniStreamRW(miniFAT, Lists.newArrayList(0, 1), compoundFile, 64, 512);
+        byte[] result = miniStreamRW.read(0, 516);
         assertEquals(516, result.length);
         verify(miniFAT, times(1)).buildChain(0);
         assertArrayEquals(Utils.initializedWith(64, 0), ArrayUtils.subarray(result, 0, 64));
