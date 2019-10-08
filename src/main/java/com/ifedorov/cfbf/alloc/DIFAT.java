@@ -1,6 +1,7 @@
-package com.ifedorov.cfbf;
+package com.ifedorov.cfbf.alloc;
 
 import com.google.common.collect.Lists;
+import com.ifedorov.cfbf.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -9,27 +10,30 @@ import java.util.stream.Stream;
 
 public class DIFAT {
 
-    private CompoundFile compoundFile;
+    private Sectors sectors;
     private Header header;
+    private FATtoDIFATFacade faTtoDIFATFacade;
     private List<Sector> difatSectors = Lists.newArrayList();
 
-    public DIFAT(CompoundFile compoundFile, Header header) {
-        this.compoundFile = compoundFile;
+    public DIFAT(Sectors sectors, Header header, FATtoDIFATFacade faTtoDIFATFacade) {
+        this.sectors = sectors;
         this.header = header;
+        this.faTtoDIFATFacade = faTtoDIFATFacade;
         readDifatSectors();
     }
 
     private void readDifatSectors() {
         int firstDifatSectorLocation = header.getFirstDifatSectorLocation();
         if(!Utils.isEndOfChain(firstDifatSectorLocation)) {
-            Sector lastSector = compoundFile.sector(firstDifatSectorLocation);
+            Sector lastSector = sectors.sector(firstDifatSectorLocation);
             difatSectors.add(lastSector);
             int nextSectorPosition = -1;
             while(!Utils.isEndOfChain(nextSectorPosition = Utils.toInt(lastSector.subView(header.getSectorShift() - 4, header.getSectorShift()).getData()))) {
-                difatSectors.add(lastSector = compoundFile.sector(nextSectorPosition));
+                difatSectors.add(lastSector = sectors.sector(nextSectorPosition));
             }
         }
     }
+
     public List<Integer> getFatSectorChain() {
         List<Integer> result = Lists.newArrayList();
         result.addAll(header.getDifatEntries());

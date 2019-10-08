@@ -1,17 +1,17 @@
 package com.ifedorov.cfbf.stream;
 
-import com.ifedorov.cfbf.CompoundFile;
-import com.ifedorov.cfbf.FAT;
+import com.ifedorov.cfbf.Sectors;
+import com.ifedorov.cfbf.alloc.FAT;
 import com.ifedorov.cfbf.Sector;
 
 public class RegularStreamRW implements StreamRW {
 
     private final FAT fat;
-    private final CompoundFile compoundFile;
+    private final Sectors sectors;
 
-    public RegularStreamRW(FAT fat, CompoundFile compoundFile) {
+    public RegularStreamRW(FAT fat, Sectors sectors) {
         this.fat = fat;
-        this.compoundFile = compoundFile;
+        this.sectors = sectors;
     }
 
     @Override
@@ -20,7 +20,7 @@ public class RegularStreamRW implements StreamRW {
         int positionInResult = 0;
         for (Integer sectorPosition : fat.buildChain(startingSector)) {
             if(length > 0) {
-                Sector sector = compoundFile.sector(sectorPosition);
+                Sector sector = sectors.sector(sectorPosition);
                 int bytesToRead = Math.min(sector.getSize(), length);
                 System.arraycopy(sector.subView(0, bytesToRead).getData(), 0, result, positionInResult, bytesToRead);
                 positionInResult += bytesToRead;

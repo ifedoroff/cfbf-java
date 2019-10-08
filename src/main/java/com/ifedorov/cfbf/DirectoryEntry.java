@@ -1,6 +1,7 @@
 package com.ifedorov.cfbf;
 
 import com.google.common.base.Verify;
+import com.ifedorov.cfbf.stream.StreamRW;
 import com.ifedorov.cfbf.stream.StreamReader;
 
 import java.util.Optional;
@@ -15,7 +16,7 @@ public class DirectoryEntry {
     private ColorFlag colorFlag;
     private CompoundFile compoundFile;
     private DirectoryEntryChain directoryEntryChain;
-    private final StreamReader streamReader;
+    private final StreamRW streamReader;
 
     public interface FLAG_POSITION {
         int DIRECTORY_ENTRY_NAME = 0;
@@ -33,7 +34,7 @@ public class DirectoryEntry {
         int STREAM_SIZE = 120;
     }
 
-    public DirectoryEntry(DirectoryEntryChain directoryEntryChain, DataView view, StreamReader streamReader) {
+    public DirectoryEntry(DirectoryEntryChain directoryEntryChain, DataView view, StreamRW streamReader) {
         this.directoryEntryChain = directoryEntryChain;
         this.streamReader = streamReader;
         Verify.verify(view.getSize() == ENTRY_LENGTH);

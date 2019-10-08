@@ -1,7 +1,10 @@
 package com.ifedorov.cfbf;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.*;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -10,13 +13,22 @@ import java.lang.annotation.Target;
 
 import static com.ifedorov.cfbf.HeaderTest.dummyHeader;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(SectorsTest.SectorsDataResolver.class)
+@ExtendWith(MockitoExtension.class)
 class SectorsTest {
+
+    @Mock Header header;
+
+    @BeforeEach
+    void init() {
+        when(header.getSectorShift()).thenReturn(512);
+    }
 
     @Test
     void testNumberOfSectors(@SectorsDataResolver.ByNumberOfSectors(numberOfSectors = 5) byte[] data) {
-        Sectors sectors = new Sectors(DataView.from(data), 512);
+        Sectors sectors = new Sectors(DataView.from(data), header);
         assertNotNull(sectors.sector(0));
         assertNotNull(sectors.sector(1));
         assertNotNull(sectors.sector(2));

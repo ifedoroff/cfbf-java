@@ -2,6 +2,7 @@ package com.ifedorov.cfbf.stream;
 
 import com.google.common.collect.Lists;
 import com.ifedorov.cfbf.*;
+import com.ifedorov.cfbf.alloc.MiniFAT;
 import org.apache.commons.lang3.ArrayUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,8 +15,10 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class MiniStreamRWTest {
 
-    @Mock MiniFAT miniFAT;
-    @Mock CompoundFile compoundFile;
+    @Mock
+    MiniFAT miniFAT;
+    @Mock Sectors sectors;
+    @Mock Header header;
 
     @Test
     void testRead() {
@@ -33,9 +36,11 @@ class MiniStreamRWTest {
         byte[] secondSectorData = new byte[512];
         System.arraycopy(Utils.initializedWith(64, 8), 0, secondSectorData, 0, 64);
         Sector secondSector = Sector.from(DataView.from(secondSectorData), 1);
-        when(compoundFile.sector(0)).thenReturn(firstSector);
-        when(compoundFile.sector(1)).thenReturn(secondSector);
-        MiniStreamRW miniStreamRW = new MiniStreamRW(miniFAT, Lists.newArrayList(0, 1), compoundFile, 64, 512);
+        when(sectors.sector(0)).thenReturn(firstSector);
+        when(sectors.sector(1)).thenReturn(secondSector);
+        when(header.getMiniSectorShift()).thenReturn(64);
+        when(header.getSectorShift()).thenReturn(512);
+        MiniStreamRW miniStreamRW = new MiniStreamRW(miniFAT, Lists.newArrayList(0, 1), sectors, header);
         byte[] result = miniStreamRW.read(0, 516);
         assertEquals(516, result.length);
         verify(miniFAT, times(1)).buildChain(0);

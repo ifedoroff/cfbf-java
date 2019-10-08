@@ -1,23 +1,22 @@
 package com.ifedorov.cfbf.stream;
 
 import com.ifedorov.cfbf.*;
+import com.ifedorov.cfbf.alloc.MiniFAT;
 
 import java.util.List;
 
 public class MiniStreamRW implements StreamRW {
 
     private final MiniFAT miniFAT;
+    private final Header header;
     private List<Integer> miniStreamSectorChain;
-    private final CompoundFile compoundFile;
-    private int miniSectorSize;
-    private int sectorSize;
+    private final Sectors sectors;
 
-    public MiniStreamRW(MiniFAT miniFAT, List<Integer> miniStreamSectorChain, CompoundFile compoundFile, int miniSectorSize, int sectorSize) {
+    public MiniStreamRW(MiniFAT miniFAT, List<Integer> miniStreamSectorChain, Sectors sectors, Header header) {
         this.miniFAT = miniFAT;
         this.miniStreamSectorChain = miniStreamSectorChain;
-        this.compoundFile = compoundFile;
-        this.miniSectorSize = miniSectorSize;
-        this.sectorSize = sectorSize;
+        this.sectors = sectors;
+        this.header = header;
     }
 
     @Override
@@ -39,9 +38,9 @@ public class MiniStreamRW implements StreamRW {
     }
 
     private DataView getMiniSectorData(int position) {
-        int sectorPosition = position * miniSectorSize / sectorSize;
-        int shiftInsideSector = position * miniSectorSize % sectorSize;
-        return compoundFile.sector(miniStreamSectorChain.get(sectorPosition)).subView(shiftInsideSector, shiftInsideSector + miniSectorSize);
+        int sectorPosition = position * header.getMiniSectorShift() / header.getSectorShift();
+        int shiftInsideSector = position * header.getMiniSectorShift() % header.getSectorShift();
+        return sectors.sector(miniStreamSectorChain.get(sectorPosition)).subView(shiftInsideSector, shiftInsideSector + header.getMiniSectorShift());
     }
 
     @Override

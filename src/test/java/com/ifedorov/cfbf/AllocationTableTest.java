@@ -2,6 +2,7 @@ package com.ifedorov.cfbf;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.ifedorov.cfbf.alloc.AllocationTable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -13,7 +14,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class AllocationTableTest {
 
-    @Mock CompoundFile compoundFile;
+    @Mock Sectors sectors;
 
     @Test
     void testBuildChain() {
@@ -27,10 +28,10 @@ class AllocationTableTest {
         System.arraycopy(Utils.ENDOFCHAIN_MARK, 0, secondSector, 4, 4);
         System.arraycopy(Utils.ENDOFCHAIN_MARK, 0, secondSector, 8, 4);
         System.arraycopy(Utils.ENDOFCHAIN_MARK, 0, secondSector, 12, 4);
-        when(compoundFile.sector(0)).thenReturn(Sector.from(DataView.from(firstSector), 0));
-        when(compoundFile.sector(1)).thenReturn(Sector.from(DataView.from(secondSector), 1));
+        when(sectors.sector(0)).thenReturn(Sector.from(DataView.from(firstSector), 0));
+        when(sectors.sector(1)).thenReturn(Sector.from(DataView.from(secondSector), 1));
         AllocationTable allocationTable = new AllocationTable(
-                compoundFile,
+                sectors,
                 Lists.newArrayList(0, 1),
                 16);
         assertEquals(4, allocationTable.buildChain(0).size());

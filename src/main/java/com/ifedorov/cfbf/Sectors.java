@@ -9,11 +9,13 @@ public class Sectors {
 
     private DataView dataView;
     private int sectorShift;
+    private Header header;
     private final List<Sector> sectors = Lists.newArrayList();
 
-    public Sectors(DataView dataView, int sectorShift) {
+    public Sectors(DataView dataView, Header header) {
         this.dataView = dataView;
-        this.sectorShift = sectorShift;
+        this.sectorShift = header.getSectorShift();
+        this.header = header;
         readSectors();
     }
 

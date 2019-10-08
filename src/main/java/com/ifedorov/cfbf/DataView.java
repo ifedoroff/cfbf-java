@@ -3,7 +3,6 @@ package com.ifedorov.cfbf;
 import com.google.common.collect.Streams;
 import com.google.common.io.ByteStreams;
 import org.apache.commons.lang3.ArrayUtils;
-import sun.misc.IOUtils;
 
 import javax.xml.crypto.Data;
 import java.io.ByteArrayInputStream;

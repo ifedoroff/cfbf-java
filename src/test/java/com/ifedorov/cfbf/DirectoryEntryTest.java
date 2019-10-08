@@ -1,7 +1,7 @@
 package com.ifedorov.cfbf;
 
 import com.google.common.base.VerifyException;
-import com.ifedorov.cfbf.stream.StreamReader;
+import com.ifedorov.cfbf.stream.StreamRW;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,7 +29,7 @@ class DirectoryEntryTest {
 
     byte[] data;
     @Mock DirectoryEntryChain directoryEntryChain;
-    @Mock StreamReader streamReader;
+    @Mock StreamRW streamRW;
 
     @BeforeEach
     void init() {
@@ -42,41 +42,41 @@ class DirectoryEntryTest {
     void testDirectoryEntryShouldBe128BytesLong() {
         byte[] corruptedData = new byte[127];
         System.arraycopy(data, 0, corruptedData, 0, 127);
-        assertThrows(VerifyException.class, ()->new DirectoryEntry(directoryEntryChain, DataView.from(corruptedData), streamReader));
+        assertThrows(VerifyException.class, ()->new DirectoryEntry(directoryEntryChain, DataView.from(corruptedData), streamRW));
     }
 
     @Test
     void testDirectoryEntryShouldHaveValidColorFlag() {
         data[DirectoryEntry.FLAG_POSITION.COLOR_FLAG] = (byte) DirectoryEntry.ColorFlag.BLACK.code();
-        new DirectoryEntry(directoryEntryChain, DataView.from(data), streamReader);
+        new DirectoryEntry(directoryEntryChain, DataView.from(data), streamRW);
         data[DirectoryEntry.FLAG_POSITION.COLOR_FLAG] = (byte) DirectoryEntry.ColorFlag.RED.code();
-        new DirectoryEntry(directoryEntryChain, DataView.from(data), streamReader);
+        new DirectoryEntry(directoryEntryChain, DataView.from(data), streamRW);
         data[DirectoryEntry.FLAG_POSITION.COLOR_FLAG] = (byte) 2;
-        assertThrows(IllegalArgumentException.class, ()-> new DirectoryEntry(directoryEntryChain, DataView.from(data), streamReader));
+        assertThrows(IllegalArgumentException.class, ()-> new DirectoryEntry(directoryEntryChain, DataView.from(data), streamRW));
         data[DirectoryEntry.FLAG_POSITION.COLOR_FLAG] = (byte) -1;
-        assertThrows(IllegalArgumentException.class, ()-> new DirectoryEntry(directoryEntryChain, DataView.from(data), streamReader));
+        assertThrows(IllegalArgumentException.class, ()-> new DirectoryEntry(directoryEntryChain, DataView.from(data), streamRW));
     }
 
     @Test
     void testDirectoryEntryShouldHaveValidObjectType() {
         System.arraycopy(Utils.toBytes(DirectoryEntry.ObjectType.Storage.code(), 1), 0, data, DirectoryEntry.FLAG_POSITION.OBJECT_TYPE, 1);
-        new DirectoryEntry(directoryEntryChain, DataView.from(data), streamReader);
+        new DirectoryEntry(directoryEntryChain, DataView.from(data), streamRW);
         System.arraycopy(Utils.toBytes(DirectoryEntry.ObjectType.RootStorage.code(), 1), 0, data, DirectoryEntry.FLAG_POSITION.OBJECT_TYPE, 1);
-        new DirectoryEntry(directoryEntryChain, DataView.from(data), streamReader);
+        new DirectoryEntry(directoryEntryChain, DataView.from(data), streamRW);
         System.arraycopy(Utils.toBytes(DirectoryEntry.ObjectType.Stream.code(), 1), 0, data, DirectoryEntry.FLAG_POSITION.OBJECT_TYPE, 1);
-        new DirectoryEntry(directoryEntryChain, DataView.from(data), streamReader);
+        new DirectoryEntry(directoryEntryChain, DataView.from(data), streamRW);
         System.arraycopy(Utils.toBytes(DirectoryEntry.ObjectType.Unknown.code(), 1), 0, data, DirectoryEntry.FLAG_POSITION.OBJECT_TYPE, 1);
-        new DirectoryEntry(directoryEntryChain, DataView.from(data), streamReader);
+        new DirectoryEntry(directoryEntryChain, DataView.from(data), streamRW);
         System.arraycopy(Utils.toBytes(-1, 1), 0, data, DirectoryEntry.FLAG_POSITION.OBJECT_TYPE, 1);
-        assertThrows(IllegalArgumentException.class, ()->new DirectoryEntry(directoryEntryChain, DataView.from(data), streamReader));
+        assertThrows(IllegalArgumentException.class, ()->new DirectoryEntry(directoryEntryChain, DataView.from(data), streamRW));
     }
 
     @Test
     void testDirectoryEntryNameLength() {
         System.arraycopy(Utils.toBytes(65, 2), 0, data, DirectoryEntry.FLAG_POSITION.DIRECTORY_ENTRY_NAME_LENGTH, 2);
-        assertThrows(VerifyException.class, () -> new DirectoryEntry(directoryEntryChain, DataView.from(data), streamReader));
+        assertThrows(VerifyException.class, () -> new DirectoryEntry(directoryEntryChain, DataView.from(data), streamRW));
         System.arraycopy(Utils.toBytes(15, 2), 0, data, DirectoryEntry.FLAG_POSITION.DIRECTORY_ENTRY_NAME_LENGTH, 2);
-        assertEquals(15, new DirectoryEntry(directoryEntryChain, DataView.from(data), streamReader).getDirectoryEntryNameLength());
+        assertEquals(15, new DirectoryEntry(directoryEntryChain, DataView.from(data), streamRW).getDirectoryEntryNameLength());
     }
 
     @Test
@@ -90,7 +90,7 @@ class DirectoryEntryTest {
         System.arraycopy(Utils.toBytes(1, 4), 0, data, DirectoryEntry.FLAG_POSITION.CHILD, 4);
         System.arraycopy(Utils.toBytes(2, 4), 0, data, DirectoryEntry.FLAG_POSITION.LEFT_SIBLING, 4);
         System.arraycopy(Utils.toBytes(3, 4), 0, data, DirectoryEntry.FLAG_POSITION.RIGHT_SIBLING, 4);
-        DirectoryEntry directoryEntry = new DirectoryEntry(directoryEntryChain, DataView.from(data), streamReader);
+        DirectoryEntry directoryEntry = new DirectoryEntry(directoryEntryChain, DataView.from(data), streamRW);
         assertEquals(child, directoryEntry.getChild().orElseThrow(() -> new RuntimeException("child has to be presented")));
         assertEquals(leftSibling, directoryEntry.getLeftSibling().orElseThrow(() -> new RuntimeException("child has to be presented")));
         assertEquals(rightSibling, directoryEntry.getRightSibling().orElseThrow(() -> new RuntimeException("child has to be presented")));
@@ -101,7 +101,7 @@ class DirectoryEntryTest {
         System.arraycopy(Utils.FREESECT_MARK_OR_NOSTREAM, 0, data, DirectoryEntry.FLAG_POSITION.CHILD, 4);
         System.arraycopy(Utils.FREESECT_MARK_OR_NOSTREAM, 0, data, DirectoryEntry.FLAG_POSITION.LEFT_SIBLING, 4);
         System.arraycopy(Utils.FREESECT_MARK_OR_NOSTREAM, 0, data, DirectoryEntry.FLAG_POSITION.RIGHT_SIBLING, 4);
-        DirectoryEntry directoryEntry = new DirectoryEntry(directoryEntryChain, DataView.from(data), streamReader);
+        DirectoryEntry directoryEntry = new DirectoryEntry(directoryEntryChain, DataView.from(data), streamRW);
         assertFalse(directoryEntry.getChild().isPresent());
         assertFalse(directoryEntry.getLeftSibling().isPresent());
         assertFalse(directoryEntry.getRightSibling().isPresent());
