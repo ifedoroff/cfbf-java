@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static com.ifedorov.cfbf.Header.*;
+import static com.ifedorov.cfbf.Header.FLAG_POSITION.DIFAT_ENTRIES_FIRST_POSITION;
 import static com.ifedorov.cfbf.Header.FLAG_POSITION.NUMBER_OF_MINIFAT_SECTORS;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -17,6 +18,8 @@ class HeaderTest {
 
     private static final byte[] DUMMY_HEADER = new byte[HEADER_LENGTH];
     static {
+        System.arraycopy(Header.HEADER_SIGNATURE, 0, DUMMY_HEADER, FLAG_POSITION.SIGNATURE, 8);
+        System.arraycopy(Header.MINOR_VERSION_3, 0, DUMMY_HEADER, FLAG_POSITION.MINOR_VERSION, 2);
         System.arraycopy(Header.MAJOR_VERSION_3, 0, DUMMY_HEADER, FLAG_POSITION.MAJOR_VERSION, 2);
         System.arraycopy(Header.BYTE_ORDER_LITTLE_ENDIAN, 0, DUMMY_HEADER, FLAG_POSITION.BYTE_ORDER, 2);
         System.arraycopy(Header.SECTOR_SHIFT_VERSION_3, 0, DUMMY_HEADER, FLAG_POSITION.SECTOR_SHIFT, 2);
@@ -36,7 +39,9 @@ class HeaderTest {
 
     @BeforeEach
     void init() {
-        data = new byte[512];
+        data = new byte[HEADER_LENGTH];
+        System.arraycopy(Header.HEADER_SIGNATURE, 0, data, FLAG_POSITION.SIGNATURE, 8);
+        System.arraycopy(Header.MINOR_VERSION_3, 0, data, FLAG_POSITION.MINOR_VERSION, 2);
         System.arraycopy(Header.MAJOR_VERSION_3, 0, data, FLAG_POSITION.MAJOR_VERSION, 2);
         System.arraycopy(Header.BYTE_ORDER_LITTLE_ENDIAN, 0, data, FLAG_POSITION.BYTE_ORDER, 2);
         System.arraycopy(Header.SECTOR_SHIFT_VERSION_3, 0, data, FLAG_POSITION.SECTOR_SHIFT, 2);
@@ -133,5 +138,37 @@ class HeaderTest {
         System.arraycopy(Utils.toBytes(2, 4), 0, data, 84, 4);
         List<Integer> difatEntries = new Header(DataView.from(data)).getDifatEntries();
         assertTrue(Iterables.elementsEqual(Lists.newArrayList(0,1,2), difatEntries));
+    }
+
+    @Test
+    void testRegisterFatSector() {
+        Header header = new Header(DataView.from(data));
+        header.registerFatSector(100);
+        assertEquals(1, header.getDifatEntries().size());
+        assertEquals(100, header.getDifatEntries().get(0));
+        assertEquals(100, Utils.toInt(ArrayUtils.subarray(data, DIFAT_ENTRIES_FIRST_POSITION, DIFAT_ENTRIES_FIRST_POSITION + 4)));
+    }
+
+    @Test
+    void testRegisterFatSectorOutOfRange() {
+        for (int i = DIFAT_ENTRIES_FIRST_POSITION; i < HEADER_LENGTH; i+=4) {
+            System.arraycopy(Utils.toBytes(i, 4), 0, data, i, 4);
+        }
+        assertThrows(IndexOutOfBoundsException.class, () -> new Header(DataView.from(data)).registerFatSector(1));
+    }
+
+    @Test
+    void testNewHeader() {
+        DataView dataView = DataView.from(new byte[512]);
+        Header header = Header.empty(dataView);
+        Header headerNotEmpty = new Header(dataView);
+        assertArrayEquals(HEADER_SIGNATURE, dataView.subView(FLAG_POSITION.SIGNATURE, FLAG_POSITION.SIGNATURE + 8).getData());
+        assertArrayEquals(new byte[16], dataView.subView(FLAG_POSITION.CLSID, FLAG_POSITION.CLSID + 16).getData());
+        assertArrayEquals(Utils.FREESECT_MARK_OR_NOSTREAM, dataView.subView(FLAG_POSITION.FIRST_DIFAT_SECTOR, FLAG_POSITION.FIRST_DIFAT_SECTOR + 4).getData());
+        assertArrayEquals(Utils.toBytes(0, 4), dataView.subView(FLAG_POSITION.NUMBER_OF_FAT_SECTORS, FLAG_POSITION.NUMBER_OF_FAT_SECTORS + 4).getData());
+        assertArrayEquals(Utils.FREESECT_MARK_OR_NOSTREAM, dataView.subView(FLAG_POSITION.FIRST_MINIFAT_SECTOR, FLAG_POSITION.FIRST_MINIFAT_SECTOR + 4).getData());
+        assertArrayEquals(Utils.toBytes(0, 4), dataView.subView(FLAG_POSITION.NUMBER_OF_MINIFAT_SECTORS, FLAG_POSITION.NUMBER_OF_MINIFAT_SECTORS + 4).getData());
+        assertArrayEquals(Utils.toBytes(0, 4), dataView.subView(FLAG_POSITION.NUMBER_OF_DIFAT_SECTORS, FLAG_POSITION.NUMBER_OF_DIFAT_SECTORS + 4).getData());
+        assertArrayEquals(Utils.FREESECT_MARK_OR_NOSTREAM, dataView.subView(FLAG_POSITION.FIRST_DIRECTORY_SECTOR, FLAG_POSITION.FIRST_DIRECTORY_SECTOR + 4).getData());
     }
 }

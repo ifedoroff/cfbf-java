@@ -2,9 +2,14 @@ package com.ifedorov.cfbf;
 
 public interface Sector extends DataView{
     int getPosition();
-    public static Sector from(DataView view, int position) {
+    static Sector from(DataView view, int position) {
         return new SimpleSector(view, position);
     }
+
+    static Sector from(DataView view, int position, byte[] filler) {
+        return new SimpleSector(view, position).fill(filler);
+    }
+
     class SimpleSector implements Sector {
         private final DataView view;
         private final int position;
@@ -19,8 +24,9 @@ public interface Sector extends DataView{
         }
 
         @Override
-        public DataView writeAt(int position, byte[] bytes) {
-            return view.writeAt(position, bytes);
+        public Sector writeAt(int position, byte[] bytes) {
+            view.writeAt(position, bytes);
+            return this;
         }
 
         @Override
@@ -46,6 +52,12 @@ public interface Sector extends DataView{
         @Override
         public DataView allocate(int length) {
             return view.allocate(length);
+        }
+
+        @Override
+        public Sector fill(byte[] filler) {
+            view.fill(filler);
+            return this;
         }
 
         public static DataView empty() {

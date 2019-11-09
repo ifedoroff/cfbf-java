@@ -1,5 +1,6 @@
 package com.ifedorov.cfbf;
 
+import com.google.common.base.Verify;
 import com.google.common.collect.Streams;
 import com.google.common.io.ByteStreams;
 import org.apache.commons.lang3.ArrayUtils;
@@ -16,6 +17,14 @@ public interface DataView {
     DataView subView(int start, int end);
     DataView subView(int start);
     DataView allocate(int length);
+    DataView fill(byte[] filler);
+    default boolean isEmpty() {
+        return getSize() == 0;
+    };
+    default byte[] readAt(int position, int length) {
+        return ArrayUtils.subarray(getData(), position, position + length);
+    };
+
     static DataView empty() {
         return new SimpleDataView();
     }
@@ -38,7 +47,7 @@ public interface DataView {
         private byte[] data;
 
         private SimpleDataView() {
-
+            data = new byte[0];
         }
 
         public DataView writeAt(int position, byte[] bytes) {
@@ -102,7 +111,13 @@ public interface DataView {
                 System.arraycopy(data, 0, newData, 0, data.length);
                 this.data = newData;
             }
-            return new SubView(data.length, data.length + length);
+            return new SubView(data.length - length, data.length);
+        }
+
+        @Override
+        public DataView fill(byte[] filler) {
+            Utils.fill(data, filler);
+            return this;
         }
 
         private class SubView implements DataView {
@@ -168,6 +183,16 @@ public interface DataView {
             @Override
             public DataView allocate(int length) {
                 throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public DataView fill(byte[] filler) {
+                Verify.verify(getSize() % filler.length == 0);
+                int step = filler.length;
+                for (int i = 0; i < getSize(); i+=step) {
+                    this.writeAt(i, filler);
+                }
+                return this;
             }
         }
     }

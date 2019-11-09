@@ -1,6 +1,7 @@
 package com.ifedorov.cfbf;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Verify;
 import com.google.common.collect.FluentIterable;
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -15,9 +16,13 @@ import java.util.stream.StreamSupport;
 
 public class Utils {
     public static final byte[] DISECT_MARK = Utils.toBytes(0xfffffffc,4 );
+    public static final int DISECT_MARK_INT = Utils.toInt(Utils.toBytes(0xfffffffc,4 ));
     public static final byte[] FATSECT_MARK = Utils.toBytes(0xfffffffd, 4);
+    public static final int FATSECT_MARK_INT = Utils.toInt(Utils.toBytes(0xfffffffd, 4));
     public static final byte[] ENDOFCHAIN_MARK = Utils.toBytes(0xfffffffe, 4);
+    public static final int ENDOFCHAIN_MARK_INT = Utils.toInt(Utils.toBytes(0xfffffffe, 4));
     public static final byte[] FREESECT_MARK_OR_NOSTREAM = Utils.toBytes(0xffffffff, 4);
+    public static final int FREESECT_MARK_OR_NOSTREAM_INT = Utils.toInt(Utils.toBytes(0xffffffff, 4));
     public static final byte[] MAX_POSSIBLE_POSITION = Utils.toBytes(0xfffffffa, 4);
 
     public static byte[] toBytes(long l, int length) {
@@ -54,6 +59,13 @@ public class Utils {
     public static byte[] initializedWith(int size, byte value) {
         byte[] data = new byte[size];
         Arrays.fill(data, value);
+        return data;
+    }
+
+    public static byte[] initializedWith(int size, byte[] value) {
+        Verify.verify(size % value.length == 0);
+        byte[] data = new byte[size];
+        fill(data, value);
         return data;
     }
 
@@ -131,6 +143,14 @@ public class Utils {
             }
         }
         return ArrayUtils.subarray(bytes, 0, resultingLength);
+    }
+
+    public static void fill(byte[] target, byte[] filler) {
+        Verify.verify(target.length % filler.length == 0);
+        int step = filler.length;
+        for (int i = 0; i < target.length; i+=step) {
+            System.arraycopy(filler, 0, target, i, step);
+        }
     }
 
 }

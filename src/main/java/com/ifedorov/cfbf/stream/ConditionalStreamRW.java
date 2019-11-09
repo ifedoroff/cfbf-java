@@ -2,11 +2,11 @@ package com.ifedorov.cfbf.stream;
 
 public class ConditionalStreamRW implements StreamRW {
 
-    private final RegularStreamRW regularStreamRW;
-    private final MiniStreamRW miniStreamRW;
+    private final StreamRW regularStreamRW;
+    private final StreamRW miniStreamRW;
     private final int sizeThreshold;
 
-    public ConditionalStreamRW(RegularStreamRW regularStreamRW, MiniStreamRW miniStreamRW, int sizeThreshold) {
+    public ConditionalStreamRW(StreamRW regularStreamRW, StreamRW miniStreamRW, int sizeThreshold) {
         this.regularStreamRW = regularStreamRW;
         this.miniStreamRW = miniStreamRW;
         this.sizeThreshold = sizeThreshold;
@@ -24,6 +24,10 @@ public class ConditionalStreamRW implements StreamRW {
 
     @Override
     public int write(byte[] data) {
-        return 0;
+        if(data.length >= sizeThreshold) {
+            return regularStreamRW.write(data);
+        } else {
+            return miniStreamRW.write(data);
+        }
     }
 }

@@ -8,15 +8,19 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class DirectoryEntry {
+public class DirectoryEntry implements Comparable<DirectoryEntry>{
 
     public static final int ENTRY_LENGTH = 128;
     private DataView view;
     private ObjectType objectType;
     private ColorFlag colorFlag;
-    private CompoundFile compoundFile;
     private DirectoryEntryChain directoryEntryChain;
     private final StreamRW streamReader;
+
+    @Override
+    public int compareTo(DirectoryEntry o) {
+        return this.getDirectoryEntryName().compareTo(o.getDirectoryEntryName());
+    }
 
     public interface FLAG_POSITION {
         int DIRECTORY_ENTRY_NAME = 0;
@@ -113,6 +117,11 @@ public class DirectoryEntry {
 
     public ColorFlag getColorFlag() {
         return colorFlag;
+    }
+
+    public void setColorFlag(ColorFlag colorFlag) {
+        this.colorFlag = colorFlag;
+        view.subView(FLAG_POSITION.COLOR_FLAG, FLAG_POSITION.COLOR_FLAG +1).writeAt(0, new byte[]{(byte) colorFlag.code()});
     }
 
     public enum ColorFlag {

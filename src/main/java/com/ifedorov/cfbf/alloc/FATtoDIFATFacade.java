@@ -18,4 +18,12 @@ public class FATtoDIFATFacade {
     public List<Integer> getFatSectorChain() {
         return difat.getFatSectorChain();
     }
+
+    public void registerFatSectorInDIFAT(int sectorPosition) {
+        difat.registerFATSector(sectorPosition);
+    }
+
+    public void registerDifatSectorInFAT(int sectorPosition) {
+        fat.registerDifatSector(sectorPosition);
+    }
 }

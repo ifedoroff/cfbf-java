@@ -20,8 +20,8 @@ class ConditionalStreamRWTest {
 
     @BeforeEach
     void init() {
-        when(regularStreamRW.read(anyInt(), anyInt())).thenReturn(new byte[0]);
-        when(miniStreamRW.read(anyInt(), anyInt())).thenReturn(new byte[0]);
+        lenient().when(regularStreamRW.read(anyInt(), anyInt())).thenReturn(new byte[0]);
+        lenient().when(miniStreamRW.read(anyInt(), anyInt())).thenReturn(new byte[0]);
     }
 
     @Test
@@ -31,5 +31,16 @@ class ConditionalStreamRWTest {
         verify(regularStreamRW, times(1)).read(0, 4096);
         conditionalStreamRW.read(1, 4095);
         verify(miniStreamRW, times(1)).read(1, 4095);
+    }
+
+    @Test
+    void testConditionalWriteData() {
+        ConditionalStreamRW conditionalStreamRW = new ConditionalStreamRW(regularStreamRW, miniStreamRW, 4096);
+        byte[] data = new byte[4096];
+        conditionalStreamRW.write(data);
+        verify(regularStreamRW, times(1)).write(data);
+        data = new byte[4095];
+        conditionalStreamRW.write(data);
+        verify(miniStreamRW, times(1)).write(data);
     }
 }

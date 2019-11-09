@@ -20,6 +20,7 @@ public class DataViewTest {
         assertEquals(100, dataView.allocate(100).getSize());
         assertEquals(100, dataView.allocate(100).getSize());
         assertEquals(200, dataView.getSize());
+        assertArrayEquals(new byte[100], dataView.allocate(100).getData());
     }
 
     @Test
