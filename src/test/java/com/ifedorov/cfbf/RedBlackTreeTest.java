@@ -207,13 +207,13 @@ public class RedBlackTreeTest {
         try {
             tree.insert(1);
             assertEquals(
-                    TreeBuilder.empty(nodeFactory).rootNode(1, Color.BLACK, (treeLevel -> {})).build(),
+                    TreeBuilder.empty(nodeFactory).rootNode(1, (treeLevel -> {})).build(),
                     tree
                     );
             tree.insert(10);
             tree.insert(2);
             assertEquals(
-                    TreeBuilder.empty(nodeFactory).rootNode(2, Color.BLACK, treeLevel -> {
+                    TreeBuilder.empty(nodeFactory).rootNode(2, treeLevel -> {
                         treeLevel.left(1, Color.RED, treeLevel1 -> {});
                         treeLevel.right(10, Color.RED, treeLevel1 -> {});
                     }).build(),
@@ -222,7 +222,7 @@ public class RedBlackTreeTest {
             tree.insert(9);
             tree.insert(3);
             assertEquals(
-                    TreeBuilder.empty(nodeFactory).rootNode(2, Color.BLACK, treeLevel -> {
+                    TreeBuilder.empty(nodeFactory).rootNode(2, treeLevel -> {
                         treeLevel.left(1, Color.BLACK, treeLevel1 -> {});
                         treeLevel.right(9, Color.BLACK, treeLevel1 -> {
                             treeLevel1.left(3, Color.RED, levelBuilder -> {});
@@ -238,7 +238,7 @@ public class RedBlackTreeTest {
             tree.insert(7);
 
             assertEquals(
-                    TreeBuilder.empty(nodeFactory).rootNode(4, Color.BLACK, treeLevel -> {
+                    TreeBuilder.empty(nodeFactory).rootNode(4, treeLevel -> {
                         treeLevel.left(2, Color.RED, treeLevel1 -> {
                             treeLevel1.left(1, Color.BLACK, levelBuilder -> {});
                             treeLevel1.right(3, Color.BLACK, levelBuilder -> {});
@@ -360,7 +360,7 @@ public class RedBlackTreeTest {
 
             tree.delete(tree.findNode(2));
 
-            RedBlackTree sample = TreeBuilder.empty(nodeFactory).rootNode(6, Color.BLACK, levelBuilder -> {
+            RedBlackTree sample = TreeBuilder.empty(nodeFactory).rootNode(6, levelBuilder -> {
                 levelBuilder.left(4, Color.BLACK, levelBuilder1 -> {
                     levelBuilder1.left(1, Color.BLACK, levelBuilder2 -> {
                         levelBuilder2.right(3, Color.RED);
@@ -376,7 +376,7 @@ public class RedBlackTreeTest {
 
             tree.delete(tree.findNode(5));
 
-            sample = TreeBuilder.empty(nodeFactory).rootNode(6, Color.BLACK, levelBuilder -> {
+            sample = TreeBuilder.empty(nodeFactory).rootNode(6, levelBuilder -> {
                 levelBuilder.left(3, Color.BLACK, levelBuilder1 -> {
                     levelBuilder1.left(1, Color.BLACK);
                     levelBuilder1.right(4, Color.BLACK);
@@ -390,7 +390,7 @@ public class RedBlackTreeTest {
 
             tree.delete(tree.findNode(6));
 
-            sample = TreeBuilder.empty(nodeFactory).rootNode(4, Color.BLACK, levelBuilder -> {
+            sample = TreeBuilder.empty(nodeFactory).rootNode(4, levelBuilder -> {
                 levelBuilder.left(3, Color.BLACK, levelBuilder1 -> {
                     levelBuilder1.left(1, Color.RED);
                 });
@@ -403,7 +403,7 @@ public class RedBlackTreeTest {
 
             tree.delete(tree.findNode(10));
 
-            sample = TreeBuilder.empty(nodeFactory).rootNode(4, Color.BLACK, levelBuilder -> {
+            sample = TreeBuilder.empty(nodeFactory).rootNode(4, levelBuilder -> {
                 levelBuilder.left(3, Color.BLACK, levelBuilder1 -> {
                     levelBuilder1.left(1, Color.RED);
                 });
@@ -415,7 +415,7 @@ public class RedBlackTreeTest {
 
             tree.delete(tree.findNode(4));
 
-            sample = TreeBuilder.empty(nodeFactory).rootNode(3, Color.BLACK, levelBuilder -> {
+            sample = TreeBuilder.empty(nodeFactory).rootNode(3, levelBuilder -> {
                 levelBuilder.left(1, Color.BLACK);
                 levelBuilder.right(8, Color.BLACK, levelBuilder1 -> {
                     levelBuilder1.left(7, Color.RED);
@@ -428,7 +428,7 @@ public class RedBlackTreeTest {
             tree.delete(tree.findNode(3));
             tree.delete(tree.findNode(1));
 
-            sample = TreeBuilder.empty(nodeFactory).rootNode(7, Color.BLACK).build();
+            sample = TreeBuilder.empty(nodeFactory).rootNode(7).build();
             assertEquals(sample, tree);
 
             tree.delete(tree.findNode(7));

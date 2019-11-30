@@ -13,12 +13,12 @@ public class TreeBuilder<T extends Comparable<T>, N extends Node<N, T>> {
         return new TreeBuilder(nodeFactory);
     }
 
-    public TreeBuilder rootNode(T value, Node.Color color) {
-        return rootNode(value, color, levelBuilder -> {});
+    public TreeBuilder rootNode(T value) {
+        return rootNode(value, levelBuilder -> {});
     }
 
-    public TreeBuilder rootNode(T value, Node.Color color, NodeBuilder levelBuilder) {
-        N node = (N) new Node(value, color);
+    public TreeBuilder rootNode(T value, NodeBuilder levelBuilder) {
+        N node = (N) new Node(value, Node.Color.BLACK);
         tree.root(node);
         levelBuilder.accept(new TreeLevel(node, nodeFactory));
         return this;

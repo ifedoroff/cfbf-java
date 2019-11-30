@@ -125,6 +125,33 @@ public class Utils {
         return builder.toString();
     }
 
+    public static byte[] toUTF16Bytes(String string) {
+        byte[] bytes = new byte[string.length() * 2];
+        for (int i = 0; i < string.length(); i++) {
+            byte[] charBytes = new byte[0];
+            try {
+                charBytes = string.substring(i, i + 1).getBytes("UTF-16BE");
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException(e);
+            }
+            if(charBytes.length != 2) {
+                throw new IllegalStateException("Each character in UTF-16 encoding should be presented with 2 bytes");
+            }
+            bytes[2*i+1] = charBytes[0];
+            bytes[2*i] = charBytes[1];
+        }
+        return bytes;
+    }
+
+    public static byte[] addTrailingZeros(byte[] original, int maximumLength) {
+        byte[] result = new byte[maximumLength];
+        System.arraycopy(original, 0, result, 0, original.length);
+        for (int i = original.length; i < maximumLength; i++) {
+            result[i] = 0;
+        }
+        return result;
+    }
+
     public static String toUTF8WithNoTrailingZeros(byte[] bytes) {
         try {
             return new String(Utils.toUTF16String(removeTrailingZeros(bytes)).getBytes(), "UTF8");
@@ -151,6 +178,12 @@ public class Utils {
         for (int i = 0; i < target.length; i+=step) {
             System.arraycopy(filler, 0, target, i, step);
         }
+    }
+
+    public static byte[] copy(byte[] bytes) {
+        byte[] copy = new byte[bytes.length];
+        System.arraycopy(bytes, 0, copy, 0, bytes.length);
+        return copy;
     }
 
 }

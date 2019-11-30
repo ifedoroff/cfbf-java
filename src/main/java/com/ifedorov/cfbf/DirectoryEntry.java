@@ -1,8 +1,10 @@
 package com.ifedorov.cfbf;
 
+import com.google.common.base.Strings;
 import com.google.common.base.Verify;
 import com.ifedorov.cfbf.stream.StreamRW;
 import com.ifedorov.cfbf.stream.StreamReader;
+import com.ifedorov.cfbf.tree.Node;
 
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -11,15 +13,50 @@ import java.util.function.Function;
 public class DirectoryEntry implements Comparable<DirectoryEntry>{
 
     public static final int ENTRY_LENGTH = 128;
-    private DataView view;
+    public static final int ENTRY_NAME_MAXIMUM_LENGTH_UTF16_STRING = 31;
+    public static final int ENTRY_NAME_MAXIMUM_LENGTH = 64;
+    protected DataView view;
     private ObjectType objectType;
     private ColorFlag colorFlag;
+    private int id;
     private DirectoryEntryChain directoryEntryChain;
     private final StreamRW streamReader;
 
     @Override
     public int compareTo(DirectoryEntry o) {
-        return this.getDirectoryEntryName().compareTo(o.getDirectoryEntryName());
+        int result = Integer.compare(this.getDirectoryEntryName().length(), o.getDirectoryEntryName().length());
+        if(result == 0) {
+            result = this.getDirectoryEntryName().toUpperCase().compareTo(o.getDirectoryEntryName().toUpperCase());
+        }
+        return result;
+    }
+
+    protected void setRightSibling(DirectoryEntry rightSibling) {
+        if(rightSibling == null) {
+            view.subView(FLAG_POSITION.RIGHT_SIBLING, FLAG_POSITION.RIGHT_SIBLING + 4).writeAt(0, Utils.FREESECT_MARK_OR_NOSTREAM);
+        } else {
+            view.subView(FLAG_POSITION.RIGHT_SIBLING, FLAG_POSITION.RIGHT_SIBLING + 4).writeAt(0, Utils.toBytes(rightSibling.getId(), 4));
+        }
+    }
+
+    protected void setLeftSibling(DirectoryEntry leftSibling) {
+        if(leftSibling == null) {
+            view.subView(FLAG_POSITION.LEFT_SIBLING, FLAG_POSITION.LEFT_SIBLING + 4).writeAt(0, Utils.FREESECT_MARK_OR_NOSTREAM);
+        } else {
+            view.subView(FLAG_POSITION.LEFT_SIBLING, FLAG_POSITION.LEFT_SIBLING + 4).writeAt(0, Utils.toBytes(leftSibling.getId(), 4));
+        }
+    }
+
+    public void setDirectoryEntryName(String name) {
+        if(Strings.isNullOrEmpty(name)) {
+            throw new IllegalArgumentException("Directory Entry name should be non-null and non-empty string");
+        }
+        if(name.length() > ENTRY_NAME_MAXIMUM_LENGTH_UTF16_STRING) {
+            throw new IllegalArgumentException("Directory Entry name may contain 31 UTF-16 at most + NULL terminated character");
+        }
+        view.subView(FLAG_POSITION.DIRECTORY_ENTRY_NAME, FLAG_POSITION.DIRECTORY_ENTRY_NAME + ENTRY_NAME_MAXIMUM_LENGTH).writeAt(0, Utils.addTrailingZeros(Utils.toUTF16Bytes(name), ENTRY_NAME_MAXIMUM_LENGTH));
+        int lengthInBytesIncludingTerminatorSymbol = name.length();
+        view.subView(FLAG_POSITION.DIRECTORY_ENTRY_NAME_LENGTH, FLAG_POSITION.DIRECTORY_ENTRY_NAME_LENGTH + 2).writeAt(0, Utils.toBytes(lengthInBytesIncludingTerminatorSymbol * 2 + 2, 2));
     }
 
     public interface FLAG_POSITION {
@@ -38,19 +75,24 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
         int STREAM_SIZE = 120;
     }
 
-    public DirectoryEntry(DirectoryEntryChain directoryEntryChain, DataView view, StreamRW streamReader) {
+    public DirectoryEntry(int id, DirectoryEntryChain directoryEntryChain, DataView view, StreamRW streamReader) {
+        this.id = id;
         this.directoryEntryChain = directoryEntryChain;
         this.streamReader = streamReader;
         Verify.verify(view.getSize() == ENTRY_LENGTH);
         int nameLength = Utils.toInt(view.subView(FLAG_POSITION.DIRECTORY_ENTRY_NAME_LENGTH, FLAG_POSITION.DIRECTORY_ENTRY_NAME_LENGTH + 2).getData());
-        Verify.verify(nameLength >= 0 && nameLength <= 64);
+        Verify.verify(nameLength >= 0 && nameLength <= ENTRY_NAME_MAXIMUM_LENGTH);
         objectType = ObjectType.fromCode(view.subView(FLAG_POSITION.OBJECT_TYPE, FLAG_POSITION.OBJECT_TYPE +1).getData()[0]);
         colorFlag = ColorFlag.fromCode(view.subView(FLAG_POSITION.COLOR_FLAG, FLAG_POSITION.COLOR_FLAG +1).getData()[0]);
         this.view = view;
     }
 
+    public int getId() {
+        return id;
+    }
+
     public String getDirectoryEntryName() {
-        return Utils.toUTF8WithNoTrailingZeros(view.subView(FLAG_POSITION.DIRECTORY_ENTRY_NAME, FLAG_POSITION.DIRECTORY_ENTRY_NAME + 64).getData());
+        return Utils.toUTF8WithNoTrailingZeros(view.subView(FLAG_POSITION.DIRECTORY_ENTRY_NAME, FLAG_POSITION.DIRECTORY_ENTRY_NAME + ENTRY_NAME_MAXIMUM_LENGTH).getData());
     }
 
     public int getDirectoryEntryNameLength() {
@@ -124,6 +166,10 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
         view.subView(FLAG_POSITION.COLOR_FLAG, FLAG_POSITION.COLOR_FLAG +1).writeAt(0, new byte[]{(byte) colorFlag.code()});
     }
 
+    public void invertColor() {
+        this.colorFlag = this.colorFlag == ColorFlag.BLACK ? ColorFlag.RED : ColorFlag.BLACK;
+    }
+
     public enum ColorFlag {
         RED(0), BLACK(1);
 
@@ -145,6 +191,10 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
 
         public int code() {
             return code;
+        }
+
+        public static ColorFlag fromNodeColor(Node.Color color) {
+            return color == Node.Color.BLACK ? BLACK : RED;
         }
 
     }
