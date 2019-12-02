@@ -14,11 +14,18 @@ public class StorageDirectoryEntry extends DirectoryEntry {
             return new DirectoryEntryNode(value, color);
         }
     };
-    private final RedBlackDirectoryEntryTree tree;
+    private final RedBlackDirectoryEntryTree tree = new RedBlackDirectoryEntryTree(NODE_FACTORY);
 
     public StorageDirectoryEntry(int id, DirectoryEntryChain directoryEntryChain, DataView view, StreamRW streamReader) {
         super(id, directoryEntryChain, view, streamReader);
-        this.tree = new RedBlackDirectoryEntryTree(NODE_FACTORY);
+    }
+
+    public StorageDirectoryEntry(int id, String name, ColorFlag colorFlag, ObjectType objectType, DirectoryEntryChain directoryEntryChain, DataView view, StreamRW streamReader) {
+        super(id, name, colorFlag, objectType, directoryEntryChain, view, streamReader);
+    }
+
+    public StorageDirectoryEntry(int id, String name, ColorFlag colorFlag, DirectoryEntryChain directoryEntryChain, DataView view, StreamRW streamReader) {
+        super(id, name, colorFlag, ObjectType.Storage, directoryEntryChain, view, streamReader);
     }
 
     public class RedBlackDirectoryEntryTree extends RedBlackTree<DirectoryEntry, DirectoryEntryNode> {

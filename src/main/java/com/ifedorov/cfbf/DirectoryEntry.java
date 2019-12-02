@@ -15,12 +15,53 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
     public static final int ENTRY_LENGTH = 128;
     public static final int ENTRY_NAME_MAXIMUM_LENGTH_UTF16_STRING = 31;
     public static final int ENTRY_NAME_MAXIMUM_LENGTH = 64;
+    public static final byte[] UTF16_TERMINATING_BYTES = new byte[]{0, 0};
     protected DataView view;
     private ObjectType objectType;
     private ColorFlag colorFlag;
     private int id;
     private DirectoryEntryChain directoryEntryChain;
     private final StreamRW streamReader;
+
+    public interface FLAG_POSITION {
+
+        int DIRECTORY_ENTRY_NAME = 0;
+        int DIRECTORY_ENTRY_NAME_LENGTH = 64;
+        int OBJECT_TYPE = 66;
+        int COLOR_FLAG = 67;
+        int LEFT_SIBLING = 68;
+        int RIGHT_SIBLING = 72;
+        int CHILD = 76;
+        int CLSID = 80;
+        int STATE_BITS = 96;
+        int CREATION_TIME = 100;
+        int MODIFY_TIME = 108;
+        int STARTING_SECTOR_LOCATION = 116;
+        int STREAM_SIZE = 120;
+    }
+    public DirectoryEntry(int id, DirectoryEntryChain directoryEntryChain, DataView view, StreamRW streamReader) {
+        this.id = id;
+        this.directoryEntryChain = directoryEntryChain;
+        this.streamReader = streamReader;
+        this.view = view;
+        Verify.verify(view.getSize() == ENTRY_LENGTH);
+        int nameLength = Utils.toInt(view.subView(FLAG_POSITION.DIRECTORY_ENTRY_NAME_LENGTH, FLAG_POSITION.DIRECTORY_ENTRY_NAME_LENGTH + 2).getData());
+        Verify.verify(nameLength >= 0 && nameLength <= ENTRY_NAME_MAXIMUM_LENGTH);
+        objectType = ObjectType.fromCode(view.subView(FLAG_POSITION.OBJECT_TYPE, FLAG_POSITION.OBJECT_TYPE +1).getData()[0]);
+        colorFlag = ColorFlag.fromCode(view.subView(FLAG_POSITION.COLOR_FLAG, FLAG_POSITION.COLOR_FLAG +1).getData()[0]);
+    }
+
+    public DirectoryEntry(int id, String name, ColorFlag colorFlag, ObjectType objectType, DirectoryEntryChain directoryEntryChain, DataView view, StreamRW streamReader) {
+        this.id = id;
+        this.directoryEntryChain = directoryEntryChain;
+        this.streamReader = streamReader;
+        this.view = view;
+        setObjectType(objectType);
+        setColorFlag(colorFlag);
+        int nameLength = name.length() * 2 + 2;
+        Verify.verify(nameLength >= 0 && nameLength <= ENTRY_NAME_MAXIMUM_LENGTH);
+        setDirectoryEntryName(name);
+    }
 
     @Override
     public int compareTo(DirectoryEntry o) {
@@ -59,34 +100,6 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
         view.subView(FLAG_POSITION.DIRECTORY_ENTRY_NAME_LENGTH, FLAG_POSITION.DIRECTORY_ENTRY_NAME_LENGTH + 2).writeAt(0, Utils.toBytes(lengthInBytesIncludingTerminatorSymbol * 2 + 2, 2));
     }
 
-    public interface FLAG_POSITION {
-        int DIRECTORY_ENTRY_NAME = 0;
-        int DIRECTORY_ENTRY_NAME_LENGTH = 64;
-        int OBJECT_TYPE = 66;
-        int COLOR_FLAG = 67;
-        int LEFT_SIBLING = 68;
-        int RIGHT_SIBLING = 72;
-        int CHILD = 76;
-        int CLSID = 80;
-        int STATE_BITS = 96;
-        int CREATION_TIME = 100;
-        int MODIFY_TIME = 108;
-        int STARTING_SECTOR_LOCATION = 116;
-        int STREAM_SIZE = 120;
-    }
-
-    public DirectoryEntry(int id, DirectoryEntryChain directoryEntryChain, DataView view, StreamRW streamReader) {
-        this.id = id;
-        this.directoryEntryChain = directoryEntryChain;
-        this.streamReader = streamReader;
-        Verify.verify(view.getSize() == ENTRY_LENGTH);
-        int nameLength = Utils.toInt(view.subView(FLAG_POSITION.DIRECTORY_ENTRY_NAME_LENGTH, FLAG_POSITION.DIRECTORY_ENTRY_NAME_LENGTH + 2).getData());
-        Verify.verify(nameLength >= 0 && nameLength <= ENTRY_NAME_MAXIMUM_LENGTH);
-        objectType = ObjectType.fromCode(view.subView(FLAG_POSITION.OBJECT_TYPE, FLAG_POSITION.OBJECT_TYPE +1).getData()[0]);
-        colorFlag = ColorFlag.fromCode(view.subView(FLAG_POSITION.COLOR_FLAG, FLAG_POSITION.COLOR_FLAG +1).getData()[0]);
-        this.view = view;
-    }
-
     public int getId() {
         return id;
     }
@@ -106,6 +119,11 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
 
     private int getChildPosition() {
         return Utils.toInt(view.subView(FLAG_POSITION.CHILD, FLAG_POSITION.CHILD + 4).getData());
+    }
+
+    private void setObjectType(ObjectType objectType) {
+        this.objectType = objectType;
+        view.subView(FLAG_POSITION.OBJECT_TYPE, FLAG_POSITION.OBJECT_TYPE +1).writeAt(0, new byte[]{(byte) objectType.code()});
     }
 
     public Optional<DirectoryEntry> getLeftSibling() {
