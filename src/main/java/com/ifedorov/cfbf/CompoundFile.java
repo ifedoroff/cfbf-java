@@ -9,6 +9,8 @@ import com.ifedorov.cfbf.stream.MiniStreamRW;
 import com.ifedorov.cfbf.stream.RegularStreamRW;
 import com.ifedorov.cfbf.stream.StreamRW;
 
+import java.io.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class CompoundFile {
@@ -23,6 +25,7 @@ public class CompoundFile {
 
     public CompoundFile() {
        this(empty());
+        directoryEntryChain.createRootStorage();
     }
 
     public CompoundFile(DataView dataView) {
@@ -61,7 +64,7 @@ public class CompoundFile {
 
     private static DataView empty() {
         DataView dataView = DataView.empty();
-        Header.empty(dataView.allocate(Header.HEADER_LENGTH));
+        Header header = Header.empty(dataView.allocate(Header.HEADER_LENGTH));
         return dataView;
     }
 
@@ -75,7 +78,7 @@ public class CompoundFile {
 
     private int getMiniStreamLength() {
         if(Utils.ENDOFCHAIN_MARK_INT == header.getFirstDirectorySectorLocation()) {
-            return Utils.FREESECT_MARK_OR_NOSTREAM_INT;
+            return 0;
         } else {
             return Utils.toInt(sectors.sector(header.getFirstDirectorySectorLocation()).subView(DirectoryEntry.FLAG_POSITION.STREAM_SIZE, DirectoryEntry.FLAG_POSITION.STREAM_SIZE + 4).getData());
         }
@@ -93,8 +96,39 @@ public class CompoundFile {
                 .writeAt(0, Utils.toBytes(size, 4));
     }
 
-    public DirectoryEntry getRootStorage() {
-        return directoryEntryChain.getEntryById(0);
+    public RootStorageDirectoryEntry getRootStorage() {
+        return directoryEntryChain.getRootStorage();
+    }
+
+
+    public void saveTo(File outputFile) {
+        try(FileOutputStream os = new FileOutputStream(outputFile)) {
+            os.write(dataView.getData());
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to save msg to file: ",e );
+        }
+    }
+
+    public CompoundFile copy() {
+        CompoundFile copy = new CompoundFile();
+        RootStorageDirectoryEntry rootStorage = getRootStorage();
+        RootStorageDirectoryEntry rootStorageCopy = copy.getRootStorage();
+        rootStorage.eachChild(copyConsumer(rootStorageCopy));
+        return copy;
+    }
+
+    private Consumer<DirectoryEntry> copyConsumer(StorageDirectoryEntry parent) {
+        return new Consumer<DirectoryEntry>() {
+            @Override
+            public void accept(DirectoryEntry directoryEntry) {
+                if(directoryEntry instanceof StorageDirectoryEntry) {
+                    StorageDirectoryEntry copy = parent.addStorage(directoryEntry.getDirectoryEntryName());
+                    ((StorageDirectoryEntry) directoryEntry).eachChild(copyConsumer(copy));
+                } else {
+                    parent.addStream(directoryEntry.getDirectoryEntryName(), directoryEntry.getStreamData());
+                }
+            }
+        };
     }
 
 }

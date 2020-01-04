@@ -164,11 +164,11 @@ class HeaderTest {
         Header headerNotEmpty = new Header(dataView);
         assertArrayEquals(HEADER_SIGNATURE, dataView.subView(FLAG_POSITION.SIGNATURE, FLAG_POSITION.SIGNATURE + 8).getData());
         assertArrayEquals(new byte[16], dataView.subView(FLAG_POSITION.CLSID, FLAG_POSITION.CLSID + 16).getData());
-        assertArrayEquals(Utils.FREESECT_MARK_OR_NOSTREAM, dataView.subView(FLAG_POSITION.FIRST_DIFAT_SECTOR, FLAG_POSITION.FIRST_DIFAT_SECTOR + 4).getData());
+        assertArrayEquals(Utils.ENDOFCHAIN_MARK, dataView.subView(FLAG_POSITION.FIRST_DIFAT_SECTOR, FLAG_POSITION.FIRST_DIFAT_SECTOR + 4).getData());
         assertArrayEquals(Utils.toBytes(0, 4), dataView.subView(FLAG_POSITION.NUMBER_OF_FAT_SECTORS, FLAG_POSITION.NUMBER_OF_FAT_SECTORS + 4).getData());
-        assertArrayEquals(Utils.FREESECT_MARK_OR_NOSTREAM, dataView.subView(FLAG_POSITION.FIRST_MINIFAT_SECTOR, FLAG_POSITION.FIRST_MINIFAT_SECTOR + 4).getData());
+        assertArrayEquals(Utils.ENDOFCHAIN_MARK, dataView.subView(FLAG_POSITION.FIRST_MINIFAT_SECTOR, FLAG_POSITION.FIRST_MINIFAT_SECTOR + 4).getData());
         assertArrayEquals(Utils.toBytes(0, 4), dataView.subView(FLAG_POSITION.NUMBER_OF_MINIFAT_SECTORS, FLAG_POSITION.NUMBER_OF_MINIFAT_SECTORS + 4).getData());
         assertArrayEquals(Utils.toBytes(0, 4), dataView.subView(FLAG_POSITION.NUMBER_OF_DIFAT_SECTORS, FLAG_POSITION.NUMBER_OF_DIFAT_SECTORS + 4).getData());
-        assertArrayEquals(Utils.FREESECT_MARK_OR_NOSTREAM, dataView.subView(FLAG_POSITION.FIRST_DIRECTORY_SECTOR, FLAG_POSITION.FIRST_DIRECTORY_SECTOR + 4).getData());
+        assertArrayEquals(Utils.ENDOFCHAIN_MARK, dataView.subView(FLAG_POSITION.FIRST_DIRECTORY_SECTOR, FLAG_POSITION.FIRST_DIRECTORY_SECTOR + 4).getData());
     }
 }

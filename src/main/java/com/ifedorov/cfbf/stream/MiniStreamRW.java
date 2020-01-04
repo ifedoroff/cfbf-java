@@ -22,7 +22,7 @@ public class MiniStreamRW implements StreamRW {
     public MiniStreamRW(MiniFAT miniFAT, FAT fat, int firstMiniStreamSector, int miniStreamLength, Sectors sectors, Header header) {
         this.miniFAT = miniFAT;
         this.fat = fat;
-        this.miniStreamLength =miniStreamLength;
+        this.miniStreamLength = miniStreamLength;
         if(firstMiniStreamSector >= 0) {
             this.miniStreamSectorChain = fat.buildChain(firstMiniStreamSector);
         } else {

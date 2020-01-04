@@ -76,7 +76,7 @@ public class Utils {
     }
 
     public static boolean isEndOfChain(Integer value) {
-        return value.equals(toInt(ENDOFCHAIN_MARK));
+        return value.equals(ENDOFCHAIN_MARK_INT);
     }
 
     public static boolean isEndOfChain(byte[] value) {
@@ -88,7 +88,7 @@ public class Utils {
     }
 
     public static boolean isFreeSectOrNoStream(Integer value) {
-        return value.equals(Utils.toInt(FREESECT_MARK_OR_NOSTREAM));
+        return value.equals(FREESECT_MARK_OR_NOSTREAM_INT);
     }
 
     public static String toHex(byte num) {

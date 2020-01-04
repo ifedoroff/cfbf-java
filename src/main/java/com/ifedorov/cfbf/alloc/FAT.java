@@ -21,9 +21,14 @@ public class FAT extends AllocationTable {
     }
 
     @Override
-    protected Sector allocateNewFatSector() {
-        Sector newSector = super.allocateNewFatSector();
+    protected Sector allocateNewSector() {
+        Sector newSector = super.allocateNewSector();
+        Integer sectorPosition = newSector.getPosition();
+        Sector fatSectorPointingToAllocatedSector = getFatSectorPointingToAllocatedSector(sectorPosition);
+        int positionInsideFatSector = calculatePositionInsideFatSector(sectorPosition);
+        fatSectorPointingToAllocatedSector.writeAt(positionInsideFatSector, Utils.FATSECT_MARK);
         difat.registerFatSectorInDIFAT(newSector.getPosition());
+        header.setNumberOfFatSectors(sectorChain.size());
         return newSector;
     }
 }

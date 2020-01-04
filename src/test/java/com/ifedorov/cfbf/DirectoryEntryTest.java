@@ -2,6 +2,10 @@ package com.ifedorov.cfbf;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.VerifyException;
+import com.ifedorov.cfbf.alloc.FAT;
+import com.ifedorov.cfbf.alloc.FATtoDIFATFacade;
+import com.ifedorov.cfbf.stream.MiniStreamRW;
+import com.ifedorov.cfbf.stream.RegularStreamRW;
 import com.ifedorov.cfbf.stream.StreamRW;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,6 +35,8 @@ class DirectoryEntryTest {
     byte[] data;
     @Mock DirectoryEntryChain directoryEntryChain;
     @Mock StreamRW streamRW;
+    @Mock
+    FATtoDIFATFacade faTtoDIFATFacade;
 
     @BeforeEach
     void init() {
@@ -156,5 +162,20 @@ class DirectoryEntryTest {
         assertDoesNotThrow(() -> directoryEntry.setDirectoryEntryName(string31Chars));
         assertEquals(string31Chars, directoryEntry.getDirectoryEntryName());
         assertEquals(64, directoryEntry.getDirectoryEntryNameLength());
+    }
+
+    @Test
+    void testCreateNewDirectoryEntry() {
+        DataView rootView = DataView.empty();
+        Header header = Header.empty(rootView.allocate(Header.HEADER_LENGTH));
+        Sectors sectors = new Sectors(rootView, header);
+        FAT fat = new FAT(sectors, header, faTtoDIFATFacade);
+        RegularStreamRW regularStreamRW = new RegularStreamRW(fat, sectors, header);
+        DirectoryEntryChain directoryEntryChain = new DirectoryEntryChain(sectors, fat, header, regularStreamRW);
+        DirectoryEntry stream = directoryEntryChain.createStream("1", DirectoryEntry.ColorFlag.BLACK, Utils.initializedWith(2000, 1));
+        assertFalse(stream.getLeftSibling().isPresent());
+        assertFalse(stream.getRightSibling().isPresent());
+        assertArrayEquals(Utils.initializedWith(2000, 1), stream.getStreamData());
+        assertEquals(2000, stream.getStreamSize());
     }
 }

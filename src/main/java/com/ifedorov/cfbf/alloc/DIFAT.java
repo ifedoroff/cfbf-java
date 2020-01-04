@@ -49,12 +49,15 @@ public class DIFAT {
                 difatSector = sectors.allocateDIFAT();
                 faTtoDIFATFacade.registerDifatSectorInFAT(difatSector.getPosition());
                 header.registerFatSector(difatSector.getPosition());
+                header.setFirstDifatSectorLocation(difatSector.getPosition());
                 difatSectors.add(difatSector);
+                header.setNumberOfDifatSectors(difatSectors.size());
             } else if(!difatSectors.getLast().hasFreeSpace()) {
                 difatSector = sectors.allocateDIFAT();
                 faTtoDIFATFacade.registerDifatSectorInFAT(difatSector.getPosition());
                 difatSectors.getLast().registerNextDifatSector(difatSector.getPosition());
                 difatSectors.add(difatSector);
+                header.setNumberOfDifatSectors(difatSectors.size());
             } else {
                 difatSector = difatSectors.getLast();
             }

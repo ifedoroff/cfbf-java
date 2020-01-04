@@ -33,9 +33,10 @@ public class Header {
         dataView.subView(MINI_SECTOR_SHIFT, MINI_SECTOR_SHIFT + 2).writeAt(0, MINI_SECTOR_SHIFT_VERSION_3);
         dataView.subView(MINI_STREAM_CUTOFF_SIZE_POSITION, MINI_STREAM_CUTOFF_SIZE_POSITION + 4).writeAt(0, MINI_STREAM_CUTOFF_SIZE);
         dataView.subView(MINI_STREAM_CUTOFF_SIZE_POSITION, MINI_STREAM_CUTOFF_SIZE_POSITION + 4).writeAt(0, MINI_STREAM_CUTOFF_SIZE);
-        dataView.subView(FIRST_DIFAT_SECTOR, FIRST_DIFAT_SECTOR + 4).writeAt(0, Utils.FREESECT_MARK_OR_NOSTREAM);
-        dataView.subView(FIRST_MINIFAT_SECTOR, FIRST_MINIFAT_SECTOR + 4).writeAt(0, Utils.FREESECT_MARK_OR_NOSTREAM);
-        dataView.subView(FIRST_DIRECTORY_SECTOR, FIRST_DIRECTORY_SECTOR + 4).writeAt(0, Utils.FREESECT_MARK_OR_NOSTREAM);
+        dataView.subView(FIRST_DIFAT_SECTOR, FIRST_DIFAT_SECTOR + 4).writeAt(0, Utils.ENDOFCHAIN_MARK);
+        dataView.subView(FIRST_MINIFAT_SECTOR, FIRST_MINIFAT_SECTOR + 4).writeAt(0, Utils.ENDOFCHAIN_MARK);
+        dataView.subView(FIRST_DIRECTORY_SECTOR, FIRST_DIRECTORY_SECTOR + 4).writeAt(0, Utils.ENDOFCHAIN_MARK);
+        dataView.subView(DIFAT_ENTRIES_FIRST_POSITION, 512).fill(Utils.FREESECT_MARK_OR_NOSTREAM);
         return new Header(dataView);
     }
 
@@ -103,7 +104,7 @@ public class Header {
     }
 
     public boolean canFitMoreDifatEntries() {
-        return difatEntries.isFull();
+        return !difatEntries.isFull();
     }
 
     public void setNumberOfFatSectors(int i) {
@@ -170,7 +171,7 @@ public class Header {
             difatEntries.add(sectorPosition);
         }
         public boolean isFull() {
-            return difatEntries.size() == DIFAT_ENTRIES_LIMIT_IN_HEADER;
+            return difatEntries.size() >= DIFAT_ENTRIES_LIMIT_IN_HEADER;
         }
     }
 }

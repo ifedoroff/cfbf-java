@@ -16,10 +16,14 @@ public class MiniFAT extends AllocationTable {
     }
 
     @Override
-    protected Sector allocateNewFatSector() {
-        Sector newSector = super.allocateNewFatSector();
+    protected Sector allocateNewSector() {
+        Sector newSector = super.allocateNewSector();
         Integer previousSectorPosition = sectorChain.size() == 1 ? null : sectorChain.get(sectorChain.size() - 2);
         fat.registerSector(newSector.getPosition(), previousSectorPosition);
+        header.setNumberOfMiniFatSectors(sectorChain.size());
+        if(sectorChain.size() == 1) {
+            header.setFirstMinifatSectorLocation(sectorChain.get(0));
+        }
         return newSector;
     }
 }

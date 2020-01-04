@@ -115,4 +115,16 @@ class DIFATTest {
         assertEquals(1, Utils.toInt(firstSector.subView(508).getData()));
         assertEquals(127, Utils.toInt(sectors.sector(1).subView(0, 4).getData()));
     }
+
+    @Test
+    void shouldSetNumberOfDIFATSectorsOnHeader() {
+        DataView rootView = DataView.empty();
+        Header header = Header.empty(rootView.allocate(Header.HEADER_LENGTH));
+        Sectors sectors = new Sectors(rootView, header);
+        FAT fat = new FAT(sectors, header, faTtoDIFATFacade);
+        DIFAT difat = new DIFAT(sectors, header, faTtoDIFATFacade);
+        IntStream.range(0, DIFAT_ENTRIES_LIMIT_IN_HEADER + 2).forEach(i -> difat.registerFATSector(i));
+        assertTrue(header.getFirstDifatSectorLocation() >= 0);
+        assertEquals(1, header.getNumberOfDifatSectors());
+    }
 }

@@ -27,8 +27,12 @@ public class AllocationTable {
         }
         List<Integer> chain = Lists.newArrayList();
         chain.add(currentSector);
-        while(!Utils.isEndOfChain(currentSector = getValueAt(currentSector))) {
-            chain.add(currentSector);
+        try {
+            while (!Utils.isEndOfChain(currentSector = getValueAt(currentSector))) {
+                chain.add(currentSector);
+            }
+        } catch (IndexOutOfBoundsException e) {
+            throw e;
         }
         return chain;
     }
@@ -52,7 +56,7 @@ public class AllocationTable {
         if(sectorChain.size() <= fatSectorInChain) {
             Sector targetSector = null;
             while(sectorChain.size() <= fatSectorInChain) {
-                targetSector = allocateNewFatSector();
+                targetSector = allocateNewSector();
             }
             return targetSector;
         } else {
@@ -60,13 +64,10 @@ public class AllocationTable {
         }
     }
 
-    protected Sector allocateNewFatSector() {
+    protected Sector allocateNewSector() {
         Sector fatSector = sectors.allocate();
         int sectorPosition = fatSector.getPosition();
         sectorChain.add(sectorPosition);
-        Sector fatSectorPointingToAllocatedSector = getFatSectorPointingToAllocatedSector(sectorPosition);
-        int positionInsideFatSector = calculatePositionInsideFatSector(sectorPosition);
-        fatSectorPointingToAllocatedSector.writeAt(positionInsideFatSector, Utils.FATSECT_MARK);
         return fatSector;
     }
 

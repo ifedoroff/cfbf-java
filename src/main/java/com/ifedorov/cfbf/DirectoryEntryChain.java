@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import static com.ifedorov.cfbf.DirectoryEntry.UTF16_TERMINATING_BYTES;
@@ -45,25 +46,45 @@ public class DirectoryEntryChain {
         }
     }
 
-    public DirectoryEntry getEntryById(int i) {
+    public RootStorageDirectoryEntry getRootStorage() {
+        return getEntryById(0);
+    }
+
+    public <T extends DirectoryEntry> T getEntryById(int i) {
+        if(i < 0 || i > directoryEntryCount - 1) {
+            throw new NoSuchElementException("" + i);
+        }
         int sectorNumber = i / 4;
         int shiftInsideSector = i % 4 * 128;
-        return new DirectoryEntry(i, this, sectors.sector(sectorChain.get(sectorNumber)).subView(shiftInsideSector, shiftInsideSector + 128), streamReader);
+        DataView view = sectors.sector(sectorChain.get(sectorNumber)).subView(shiftInsideSector, shiftInsideSector + 128);
+        DirectoryEntry.ObjectType objectType = DirectoryEntry.ObjectType.fromCode(view.subView(DirectoryEntry.FLAG_POSITION.OBJECT_TYPE, DirectoryEntry.FLAG_POSITION.OBJECT_TYPE + 1).getData()[0]);
+        if(objectType == DirectoryEntry.ObjectType.RootStorage) {
+            return (T) new RootStorageDirectoryEntry(i, this, view, streamReader);
+        } else if(objectType == DirectoryEntry.ObjectType.Storage) {
+            return (T) new StorageDirectoryEntry(i, this, view, streamReader);
+        } else {
+            return (T) new StreamDirectoryEntry(i, this, view, streamReader);
+        }
     }
 
     public RootStorageDirectoryEntry createRootStorage() {
         if(directoryEntryCount != 0) {
             throw new IllegalStateException("Root Storage should be the first Directory Entry");
         }
-        return new RootStorageDirectoryEntry(0, this, getViewForDirectoryEntry(), streamReader);
+        DataView view = getViewForDirectoryEntry();
+        RootStorageDirectoryEntry rootStorageDirectoryEntry = new RootStorageDirectoryEntry(0, this, view, streamReader);
+        return rootStorageDirectoryEntry;
     }
 
     public StorageDirectoryEntry createStorage(String name, DirectoryEntry.ColorFlag colorFlag) {
-        return new StorageDirectoryEntry(directoryEntryCount - 1, name, colorFlag, this, getViewForDirectoryEntry(), streamReader);
+        return new StorageDirectoryEntry(directoryEntryCount, name, colorFlag, this, getViewForDirectoryEntry(), streamReader);
     }
 
-    public DirectoryEntry createStream(String name, DirectoryEntry.ColorFlag colorFlag, InputStream data) {
-        DirectoryEntry streamEntry = new DirectoryEntry(directoryEntryCount - 1, name, colorFlag, DirectoryEntry.ObjectType.Stream, this, getViewForDirectoryEntry(), streamReader);
+    public DirectoryEntry createStream(String name, DirectoryEntry.ColorFlag colorFlag, byte[] data) {
+        DirectoryEntry streamEntry = new DirectoryEntry(directoryEntryCount, name, colorFlag, DirectoryEntry.ObjectType.Stream, this, getViewForDirectoryEntry(), streamReader);
+        if(data.length > 0) {
+            streamEntry.setStreamData(data);
+        }
         return streamEntry;
     }
 
@@ -72,8 +93,13 @@ public class DirectoryEntryChain {
         try {
             if (directoriesRegisteredInCurrentSector == 0) {
                 Sector directoryEntrySector = sectors.allocate();
+                if(sectorChain.isEmpty()) {
+                    header.setFirstDirectorySectorLocation(directoryEntrySector.getPosition());
+                    fat.registerSector(directoryEntrySector.getPosition(), null);
+                } else {
+                    fat.registerSector(directoryEntrySector.getPosition(), sectorChain.getLast());
+                }
                 sectorChain.add(directoryEntrySector.getPosition());
-                header.setFirstDirectorySectorLocation(directoryEntrySector.getPosition());
                 return directoryEntrySector.subView(0, 128);
             } else {
                 return sectors.sector(sectorChain.getLast())
