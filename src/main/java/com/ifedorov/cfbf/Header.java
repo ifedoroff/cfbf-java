@@ -164,7 +164,7 @@ public class Header {
             return difatEntries;
         }
         public void registerFatSector(int sectorPosition) {
-            if(difatEntries.size() > DIFAT_ENTRIES_LIMIT_IN_HEADER) {
+            if(difatEntries.size() >= DIFAT_ENTRIES_LIMIT_IN_HEADER) {
                 throw new IndexOutOfBoundsException("Unable to register additional FAT sector in Header");
             }
             view.writeAt(difatEntries.size() * 4, Utils.toBytes(sectorPosition, 4));

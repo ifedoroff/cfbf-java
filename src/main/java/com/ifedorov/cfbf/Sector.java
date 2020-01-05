@@ -60,6 +60,11 @@ public interface Sector extends DataView{
             return this;
         }
 
+        @Override
+        public byte[] readAt(int position, int length) {
+            return view.readAt(position, length);
+        }
+
         public static DataView empty() {
             return DataView.empty();
         }

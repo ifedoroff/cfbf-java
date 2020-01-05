@@ -27,13 +27,10 @@ public class AllocationTable {
         }
         List<Integer> chain = Lists.newArrayList();
         chain.add(currentSector);
-        try {
-            while (!Utils.isEndOfChain(currentSector = getValueAt(currentSector))) {
-                chain.add(currentSector);
-            }
-        } catch (IndexOutOfBoundsException e) {
-            throw e;
+        while (!Utils.isEndOfChain(currentSector = getValueAt(currentSector))) {
+            chain.add(currentSector);
         }
+
         return chain;
     }
 

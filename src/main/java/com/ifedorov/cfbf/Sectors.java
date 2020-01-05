@@ -28,10 +28,10 @@ public class Sectors {
     private void readSectors() {
         //Skip first 512 bytes designated for Header
         if(!this.dataView.isEmpty()) {
-            DataView sectorsDataView = this.dataView.subView(header.getSectorShift());
-            Verify.verify(sectorsDataView.getSize() % sectorShift == 0);
-            for (int i = 0; i < sectorsDataView.getSize() / sectorShift; i++) {
-                sectors.add(Sector.from(sectorsDataView.subView(i * sectorShift, (i + 1) * sectorShift), sectors.size()));
+//            DataView sectorsDataView = this.dataView.subView(header.getSectorShift());
+            Verify.verify(this.dataView.getSize() % sectorShift == 0);
+            for (int i = 1; i < dataView.getSize() / sectorShift; i++) {
+                sectors.add(Sector.from(dataView.subView(i * sectorShift, (i + 1) * sectorShift), sectors.size()));
             }
         }
     }

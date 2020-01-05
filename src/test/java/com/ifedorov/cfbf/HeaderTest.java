@@ -52,7 +52,7 @@ class HeaderTest {
 
     @Test
     void testEnforceSize() {
-        assertThrows(IndexOutOfBoundsException.class, () -> new Header(DataView.from(new byte[513])));
+        assertThrows(IndexOutOfBoundsException.class, () -> new Header(new DataView.SimpleDataView(new byte[513])));
     }
 
     @Test
@@ -105,7 +105,7 @@ class HeaderTest {
         System.arraycopy(Utils.toBytes(0x00000004, 4), 0, data, FLAG_POSITION.NUMBER_OF_MINIFAT_SECTORS, 4);
         System.arraycopy(Utils.toBytes(0x00000005, 4), 0, data, FLAG_POSITION.FIRST_DIFAT_SECTOR, 4);
         System.arraycopy(Utils.toBytes(0x00000006, 4), 0, data, FLAG_POSITION.NUMBER_OF_DIFAT_SECTORS, 4);
-        Header header = new Header(DataView.from(data));
+        Header header = new Header(new DataView.SimpleDataView(data));
         assertEquals(1, header.getNumberOfFatSectors());
         assertEquals(2, header.getFirstDirectorySectorLocation());
         assertEquals(3, header.getFirstMinifatSectorLocation());
@@ -136,13 +136,13 @@ class HeaderTest {
         System.arraycopy(Utils.toBytes(0, 4), 0, data, 76, 4);
         System.arraycopy(Utils.toBytes(1, 4), 0, data, 80, 4);
         System.arraycopy(Utils.toBytes(2, 4), 0, data, 84, 4);
-        List<Integer> difatEntries = new Header(DataView.from(data)).getDifatEntries();
+        List<Integer> difatEntries = new Header(DataView.from(data).subView(0, HEADER_LENGTH)).getDifatEntries();
         assertTrue(Iterables.elementsEqual(Lists.newArrayList(0,1,2), difatEntries));
     }
 
     @Test
     void testRegisterFatSector() {
-        Header header = new Header(DataView.from(data));
+        Header header = new Header(new DataView.SimpleDataView(data));
         header.registerFatSector(100);
         assertEquals(1, header.getDifatEntries().size());
         assertEquals(100, header.getDifatEntries().get(0));
@@ -154,12 +154,12 @@ class HeaderTest {
         for (int i = DIFAT_ENTRIES_FIRST_POSITION; i < HEADER_LENGTH; i+=4) {
             System.arraycopy(Utils.toBytes(i, 4), 0, data, i, 4);
         }
-        assertThrows(IndexOutOfBoundsException.class, () -> new Header(DataView.from(data)).registerFatSector(1));
+        assertThrows(IndexOutOfBoundsException.class, () -> new Header(new DataView.SimpleDataView(data)).registerFatSector(1));
     }
 
     @Test
     void testNewHeader() {
-        DataView dataView = DataView.from(new byte[512]);
+        DataView dataView = new DataView.SimpleDataView(new byte[512]);
         Header header = Header.empty(dataView);
         Header headerNotEmpty = new Header(dataView);
         assertArrayEquals(HEADER_SIGNATURE, dataView.subView(FLAG_POSITION.SIGNATURE, FLAG_POSITION.SIGNATURE + 8).getData());

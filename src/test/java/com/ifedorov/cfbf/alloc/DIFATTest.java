@@ -84,7 +84,7 @@ class DIFATTest {
     void testRegisterTwoFatSectorsInFirstDIFATSector() {
         when(header.getFirstDifatSectorLocation()).thenReturn(Utils.toInt(Utils.ENDOFCHAIN_MARK));
         when(header.canFitMoreDifatEntries()).thenReturn(false);
-        DIFATSector sector = new DIFATSector(Sector.from(DataView.from(new byte[HEADER_LENGTH]), 1, Utils.FREESECT_MARK_OR_NOSTREAM));
+        DIFATSector sector = new DIFATSector(Sector.from(new DataView.SimpleDataView(new byte[HEADER_LENGTH]), 1, Utils.FREESECT_MARK_OR_NOSTREAM));
         when(sectors.allocateDIFAT()).thenReturn(sector);
 
         DIFAT difat = new DIFAT(sectors, header, faTtoDIFATFacade);

@@ -1,5 +1,6 @@
 package com.ifedorov.cfbf;
 
+import com.google.common.base.VerifyException;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -11,21 +12,21 @@ public class DataViewTest {
     @Test
     void testOverflow() {
         assertThrows(IndexOutOfBoundsException.class, () -> DataView.empty().writeAt(0, new byte[1]));
-        assertThrows(IndexOutOfBoundsException.class, () -> DataView.empty().allocate(10).writeAt(5, new byte[6]));
+        assertThrows(IndexOutOfBoundsException.class, () -> DataView.empty().allocate(512).writeAt(510, new byte[6]));
     }
 
     @Test
     void testSize() {
         DataView dataView = DataView.empty();
-        assertEquals(100, dataView.allocate(100).getSize());
-        assertEquals(100, dataView.allocate(100).getSize());
-        assertEquals(200, dataView.getSize());
-        assertArrayEquals(new byte[100], dataView.allocate(100).getData());
+        assertThrows(VerifyException.class, () -> dataView.allocate(100).getSize());
+        assertEquals(512, dataView.allocate(512).getSize());
+        assertEquals(512, dataView.allocate(512).getSize());
+        assertEquals(1024, dataView.getSize());
     }
 
     @Test
     void testSubView() {
-        DataView dataView = DataView.from(new byte[100]);
+        DataView dataView = new DataView.SimpleDataView(new byte[100]);
         byte[] firstPart = new byte[50];
         Arrays.fill(firstPart, (byte)1);
         dataView.writeAt(0, firstPart);

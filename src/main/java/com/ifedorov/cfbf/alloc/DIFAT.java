@@ -48,7 +48,6 @@ public class DIFAT {
             if(difatSectors.isEmpty()) {
                 difatSector = sectors.allocateDIFAT();
                 faTtoDIFATFacade.registerDifatSectorInFAT(difatSector.getPosition());
-                header.registerFatSector(difatSector.getPosition());
                 header.setFirstDifatSectorLocation(difatSector.getPosition());
                 difatSectors.add(difatSector);
                 header.setNumberOfDifatSectors(difatSectors.size());

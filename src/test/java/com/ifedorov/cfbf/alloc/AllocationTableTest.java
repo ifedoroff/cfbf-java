@@ -43,8 +43,8 @@ class AllocationTableTest {
         System.arraycopy(Utils.ENDOFCHAIN_MARK, 0, secondSector, 4, 4);
         System.arraycopy(Utils.ENDOFCHAIN_MARK, 0, secondSector, 8, 4);
         System.arraycopy(Utils.ENDOFCHAIN_MARK, 0, secondSector, 12, 4);
-        when(sectors.sector(0)).thenReturn(Sector.from(DataView.from(firstSector), 0));
-        when(sectors.sector(1)).thenReturn(Sector.from(DataView.from(secondSector), 1));
+        when(sectors.sector(0)).thenReturn(Sector.from(new DataView.SimpleDataView(firstSector), 0));
+        when(sectors.sector(1)).thenReturn(Sector.from(new DataView.SimpleDataView(secondSector), 1));
         AllocationTable allocationTable = new AllocationTable(
                 sectors,
                 Lists.newArrayList(0, 1),
@@ -53,50 +53,6 @@ class AllocationTableTest {
         assertTrue(Iterables.elementsEqual(Lists.newArrayList(0,1,2,5), allocationTable.buildChain(0)));
         assertEquals(3, allocationTable.buildChain(3).size());
         assertTrue(Iterables.elementsEqual(Lists.newArrayList(3,4,6), allocationTable.buildChain(3)));
-    }
-
-    @Test
-    void testRegisterSectorsInOneFatSector() {
-        Sectors sectors = new Sectors(DataView.empty(), header);
-        List<Integer> sectorPositions = IntStream.range(0, 128).map(val -> sectors.allocate().getPosition()).boxed().collect(Collectors.toList());
-        AllocationTable allocationTable = new AllocationTable(sectors, Lists.newArrayList(), header.getSectorShift());
-        allocationTable.registerSector(sectorPositions.get(0), null);
-        for (int i = 1; i <sectorPositions.size(); i++) {
-            allocationTable.registerSector(sectorPositions.get(i), sectorPositions.get(i - 1));
-        }
-//        verify(fatToDIFATFacade, times(1)).registerFatSectorInDIFAT(128);
-//        verify(fatToDIFATFacade, times(1)).registerFatSectorInDIFAT(129);
-//        verify(fatToDIFATFacade, times(2)).registerFatSectorInDIFAT(anyInt());
-        Sector fatSector = sectors.sector(128);
-        for (int i = 0; i < sectorPositions.size() - 2; i++) {
-            assertEquals(sectorPositions.get(i + 1), Utils.toInt(fatSector.subView(i * 4, (i + 1) * 4).getData()));
-        }
-        assertArrayEquals(fatSector.subView(508).getData(), Utils.ENDOFCHAIN_MARK);
-        Sector secondFATSector = sectors.sector(129);
-        assertArrayEquals(Utils.FATSECT_MARK, secondFATSector.subView(0, 4).getData());
-        assertArrayEquals(Utils.FATSECT_MARK, secondFATSector.subView(4, 8).getData());
-    }
-
-    @Test
-    void testRegisterSectorsBeyondOneFatSector() {
-        Sectors sectors = new Sectors(DataView.empty(), header);
-        List<Integer> sectorPositions = IntStream.range(0, 129).map(val -> sectors.allocate().getPosition()).boxed().collect(Collectors.toList());
-        AllocationTable allocationTable = new AllocationTable(sectors, Lists.newArrayList(), header.getSectorShift());
-        allocationTable.registerSector(sectorPositions.get(0), null);
-        for (int i = 1; i <sectorPositions.size(); i++) {
-            allocationTable.registerSector(sectorPositions.get(i), sectorPositions.get(i - 1));
-        }
-//        verify(fatToDIFATFacade, times(1)).registerFatSectorInDIFAT(129);
-//        verify(fatToDIFATFacade, times(1)).registerFatSectorInDIFAT(130);
-        Sector fatSector = sectors.sector(129);
-        for (int i = 0; i < sectorPositions.size() - 1; i++) {
-            assertEquals(sectorPositions.get(i + 1), Utils.toInt(fatSector.subView(i * 4, (i + 1) * 4).getData()));
-        }
-        assertEquals(128, Utils.toInt(fatSector.subView(508).getData()));
-        Sector secondFatSector = sectors.sector(130);
-        assertArrayEquals(Utils.ENDOFCHAIN_MARK, secondFatSector.subView(0, 4).getData());
-        assertArrayEquals(Utils.FATSECT_MARK, secondFatSector.subView(4, 8).getData());
-        assertArrayEquals(Utils.FATSECT_MARK, secondFatSector.subView(8, 12).getData());
     }
 
     @Test

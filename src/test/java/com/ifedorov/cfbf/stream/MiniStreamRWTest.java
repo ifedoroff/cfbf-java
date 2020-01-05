@@ -54,7 +54,7 @@ class MiniStreamRWTest {
         when(sectors.sector(0)).thenReturn(firstSector);
         when(sectors.sector(1)).thenReturn(secondSector);
         when(fat.buildChain(0)).thenReturn(Lists.newArrayList(0, 1));
-        MiniStreamRW miniStreamRW = new MiniStreamRW(miniFAT, fat, 0, 8, sectors, header);
+        MiniStreamRW miniStreamRW = new MiniStreamRW(miniFAT, fat, 0, 516, sectors, header);
         byte[] result = miniStreamRW.read(0, 516);
         assertEquals(516, result.length);
         verify(miniFAT, times(1)).buildChain(0);

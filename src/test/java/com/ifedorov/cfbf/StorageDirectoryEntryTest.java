@@ -22,15 +22,18 @@ class StorageDirectoryEntryTest {
 
     @BeforeEach
     void init() {
-        data = new byte[128];
+        data = new byte[512];
         data[DirectoryEntry.FLAG_POSITION.OBJECT_TYPE] = (byte) DirectoryEntry.ObjectType.Storage.code();
         data[DirectoryEntry.FLAG_POSITION.COLOR_FLAG] = (byte) DirectoryEntry.ColorFlag.BLACK.code();
+        System.arraycopy(Utils.FREESECT_MARK_OR_NOSTREAM, 0, data, DirectoryEntry.FLAG_POSITION.LEFT_SIBLING, 4);
+        System.arraycopy(Utils.FREESECT_MARK_OR_NOSTREAM, 0, data, DirectoryEntry.FLAG_POSITION.RIGHT_SIBLING, 4);
+        System.arraycopy(Utils.FREESECT_MARK_OR_NOSTREAM, 0, data, DirectoryEntry.FLAG_POSITION.CHILD, 4);
     }
 
     @Test
     public void testAddChildren() {
 
-        RootStorageDirectoryEntry storage = new RootStorageDirectoryEntry(0, directoryEntryChain, DataView.from(Utils.copy(data)), streamRW);
+        RootStorageDirectoryEntry storage = new RootStorageDirectoryEntry(0, directoryEntryChain, DataView.from(Utils.copy(data)).subView(0, 128), streamRW);
         DirectoryEntry child1 = new DirectoryEntry(1, "a", DirectoryEntry.ColorFlag.RED, DirectoryEntry.ObjectType.Stream, directoryEntryChain, DataView.from(Utils.copy(data)), streamRW);
         DirectoryEntry child2 = new DirectoryEntry(2, "ab", DirectoryEntry.ColorFlag.RED, DirectoryEntry.ObjectType.Stream, directoryEntryChain, DataView.from(Utils.copy(data)), streamRW);
         StorageDirectoryEntry child3 = new StorageDirectoryEntry(3, "b", DirectoryEntry.ColorFlag.RED, directoryEntryChain, DataView.from(Utils.copy(data)), streamRW);
