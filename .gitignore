@@ -2,4 +2,5 @@ out
 build
 .idea
 .gradle
+*.iml
 src/test/java/com/ifedorov/cfbf/Parser.java
