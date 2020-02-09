@@ -1,5 +1,6 @@
 package com.ifedorov.cfbf;
 
+import com.google.common.base.Predicates;
 import com.google.common.collect.Sets;
 import com.ifedorov.cfbf.stream.StreamRW;
 import com.ifedorov.cfbf.tree.Node;
@@ -8,7 +9,10 @@ import com.ifedorov.cfbf.tree.RedBlackTree;
 
 import java.util.Iterator;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public class StorageDirectoryEntry extends DirectoryEntry {
 
@@ -65,13 +69,26 @@ public class StorageDirectoryEntry extends DirectoryEntry {
         return addChild(directoryEntryChain.createStorage(name, ColorFlag.RED));
     }
 
+    public DirectoryEntry findChild(Predicate<DirectoryEntry> predicate) {
+        AtomicReference<DirectoryEntry> result = new AtomicReference<>();
+        eachChild((directoryEntry) -> result.set(directoryEntry), predicate);
+        return result.get();
+    }
+
     public void eachChild(Consumer<DirectoryEntry> consumer) {
+        eachChild(consumer, Predicates.alwaysTrue());
+    }
+
+    public void eachChild(Consumer<DirectoryEntry> consumer, Predicate<DirectoryEntry> stopPredicate) {
         Set<Integer> visitedNodes = Sets.newHashSet();
         DirectoryEntryNode currentNode = tree.root();
         while(true) {
             if(currentNode != null && !visitedNodes.contains(currentNode.value().getId())) {
                 visitedNodes.add(currentNode.value().getId());
                 consumer.accept(currentNode.value());
+                if(stopPredicate.test(currentNode.value())) {
+                    break;
+                }
             }
             DirectoryEntryNode leftChild = currentNode.leftChild();
             if(leftChild != null && !visitedNodes.contains(leftChild.value().getId())) {
