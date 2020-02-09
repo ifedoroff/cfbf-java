@@ -65,14 +65,14 @@ public class MiniStreamRW implements StreamRW {
         } else {
             numberOfChunks = data.length / header.getMiniSectorShift() + 1;
         }
-        int firstMiniSectorPosition = -1;
+        int firstMiniSectorPosition = Utils.ENDOFCHAIN_MARK_INT;
         for (int i = 0; i < numberOfChunks; i++) {
             int bytesFromPosition = i * header.getMiniSectorShift();
             int bytesUpToPosition = Math.min((i + 1) * header.getMiniSectorShift(), data.length);
             byte[] bytesToWrite = ArrayUtils.subarray(data, bytesFromPosition, bytesUpToPosition);
             getDataHolderForNextChunk().writeAt(0, bytesToWrite);
             int miniSectorPosition = miniStreamLength / header.getMiniSectorShift();
-            if(firstMiniSectorPosition == -1) {
+            if(firstMiniSectorPosition == Utils.ENDOFCHAIN_MARK_INT) {
                 firstMiniSectorPosition = miniSectorPosition;
             }
             if(i == 0) {

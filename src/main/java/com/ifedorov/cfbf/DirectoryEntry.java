@@ -64,7 +64,7 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
         setLeftSibling(null);
         setRightSibling(null);
         view.subView(FLAG_POSITION.STREAM_SIZE, FLAG_POSITION.STREAM_SIZE + 8).writeAt(0, Utils.toBytes(0, 8));
-        setStreamStartingSector(Utils.FREESECT_MARK_OR_NOSTREAM_INT);
+        setStreamStartingSector(Utils.ENDOFCHAIN_MARK_INT);
     }
 
     @Override
