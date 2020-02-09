@@ -81,7 +81,7 @@ public class DirectoryEntryChain {
     }
 
     public DirectoryEntry createStream(String name, DirectoryEntry.ColorFlag colorFlag, byte[] data) {
-        DirectoryEntry streamEntry = new DirectoryEntry(directoryEntryCount, name, colorFlag, DirectoryEntry.ObjectType.Stream, this, getViewForDirectoryEntry(), streamReader);
+        DirectoryEntry streamEntry = new StreamDirectoryEntry(directoryEntryCount, name, colorFlag, this, getViewForDirectoryEntry(), streamReader);
         if(data.length > 0) {
             streamEntry.setStreamData(data);
         }

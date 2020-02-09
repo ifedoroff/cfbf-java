@@ -64,7 +64,19 @@ class StorageDirectoryEntryTest {
         storage1.addStorage("storage11");
         storage1.addStream("stream11", new byte[]{5,4,3,2,1});
         assertNotNull(rootStorage.findChild((directoryEntry -> directoryEntry.getDirectoryEntryName().equalsIgnoreCase("storage1"))));
+        assertNotNull(rootStorage.findChild((directoryEntry -> directoryEntry.getDirectoryEntryName().equalsIgnoreCase("storage2"))));
         assertArrayEquals(new byte[]{1,2,3,4,5}, rootStorage.findChild((directoryEntry -> directoryEntry.getDirectoryEntryName().equalsIgnoreCase("stream1"))).getStreamData());
         assertArrayEquals(new byte[]{5,4,3,2,1}, storage1.findChild((directoryEntry -> directoryEntry.getDirectoryEntryName().equalsIgnoreCase("stream11"))).getStreamData());
+    }
+
+    @Test
+    public void testFindChildren() {
+        CompoundFile compoundFile = new CompoundFile();
+        RootStorageDirectoryEntry rootStorage = compoundFile.getRootStorage();
+        rootStorage.addStorage("storage1");
+        rootStorage.addStorage("storage2");
+        rootStorage.addStream("stream1", new byte[]{1,2,3,4,5});
+        assertEquals(2, rootStorage.findChildren((directoryEntry -> directoryEntry instanceof StorageDirectoryEntry)).size());
+        assertEquals(1, rootStorage.findChildren((directoryEntry -> directoryEntry instanceof StreamDirectoryEntry)).size());
     }
 }

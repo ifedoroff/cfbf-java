@@ -1,6 +1,7 @@
 package com.ifedorov.cfbf;
 
 import com.google.common.base.Predicates;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.ifedorov.cfbf.stream.StreamRW;
 import com.ifedorov.cfbf.tree.Node;
@@ -8,6 +9,7 @@ import com.ifedorov.cfbf.tree.NodeFactory;
 import com.ifedorov.cfbf.tree.RedBlackTree;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -75,8 +77,18 @@ public class StorageDirectoryEntry extends DirectoryEntry {
         return result.get();
     }
 
+    public List<DirectoryEntry> findChildren(Predicate<DirectoryEntry> predicate) {
+        List<DirectoryEntry> children = Lists.newArrayList();
+        eachChild((directoryEntry) -> {
+            if(predicate.test(directoryEntry)) {
+                children.add(directoryEntry);
+            }
+        }, Predicates.alwaysFalse());
+        return children;
+    }
+
     public void eachChild(Consumer<DirectoryEntry> consumer) {
-        eachChild(consumer, Predicates.alwaysTrue());
+        eachChild(consumer, Predicates.alwaysFalse());
     }
 
     public void eachChild(Consumer<DirectoryEntry> consumer, Predicate<DirectoryEntry> stopPredicate) {
