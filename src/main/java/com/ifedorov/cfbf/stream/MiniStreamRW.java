@@ -1,6 +1,7 @@
 package com.ifedorov.cfbf.stream;
 
 import com.google.common.base.Verify;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.ifedorov.cfbf.*;
 import com.ifedorov.cfbf.alloc.FAT;
@@ -8,6 +9,7 @@ import com.ifedorov.cfbf.alloc.MiniFAT;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class MiniStreamRW implements StreamRW {
 
@@ -50,6 +52,12 @@ public class MiniStreamRW implements StreamRW {
         return result;
     }
 
+    @Override
+    public byte[] read(int startingSector, int fromIncl, int toExcl) {
+        return new DataView.VariableSizeChunkedDataView(miniFAT.buildChain(startingSector).stream().map(this::getMiniSectorData).collect(Collectors.toList()))
+                .subView(fromIncl, toExcl).getData();
+    }
+
     private DataView getMiniSectorData(int position) {
         int sectorPosition = position * header.getMiniSectorShift() / header.getSectorShift();
         int shiftInsideSector = position * header.getMiniSectorShift() % header.getSectorShift();
@@ -59,12 +67,7 @@ public class MiniStreamRW implements StreamRW {
     @Override
     public int write(byte[] data) {
         Verify.verify(data.length > 0);
-        int numberOfChunks = -1;
-        if(data.length % header.getMiniSectorShift() == 0) {
-            numberOfChunks = data.length / header.getMiniSectorShift();
-        } else {
-            numberOfChunks = data.length / header.getMiniSectorShift() + 1;
-        }
+        int numberOfChunks = howManyChunksNeeded(data.length);
         int firstMiniSectorPosition = Utils.ENDOFCHAIN_MARK_INT;
         for (int i = 0; i < numberOfChunks; i++) {
             int bytesFromPosition = i * header.getMiniSectorShift();
@@ -83,6 +86,61 @@ public class MiniStreamRW implements StreamRW {
             miniStreamLength += header.getMiniSectorShift();
         }
         return firstMiniSectorPosition;
+    }
+
+    private int howManyChunksNeeded(int dataLength) {
+        int numberOfChunks = -1;
+        if(dataLength % header.getMiniSectorShift() == 0) {
+            numberOfChunks = dataLength / header.getMiniSectorShift();
+        } else {
+            numberOfChunks = dataLength / header.getMiniSectorShift() + 1;
+        }
+        return numberOfChunks;
+    }
+
+    @Override
+    public void writeAt(int startingSector, int position, byte[] data) {
+        new DataView.VariableSizeChunkedDataView(miniFAT.buildChain(startingSector).stream().map(this::getMiniSectorData).collect(Collectors.toList()))
+                .writeAt(position, data);
+    }
+
+    @Override
+    public int append(int startingSector, int currentSize, byte[] data) {
+        List<Integer> sectorChain = miniFAT.buildChain(startingSector);
+        if(sectorChain.isEmpty()) {
+            return write(data);
+        }
+        Integer lastSectorPosition = Iterables.getLast(sectorChain);
+        DataView lastSector = getMiniSectorData(lastSectorPosition);
+        int freeBytesInLastSector = 0;
+        int remainingBytes = data.length;
+        if(currentSize % header.getMiniSectorShift() != 0) {
+            freeBytesInLastSector = lastSector.getSize() - currentSize % header.getMiniSectorShift();
+            if(freeBytesInLastSector > 0) {
+                int byteToWrite = Math.min(freeBytesInLastSector, data.length);
+                lastSector.writeAt(lastSector.getSize() - freeBytesInLastSector, ArrayUtils.subarray(data, 0, byteToWrite));
+                freeBytesInLastSector -= byteToWrite;
+                remainingBytes -= byteToWrite;
+            }
+        }
+        if(freeBytesInLastSector > 0 || remainingBytes == 0) {
+            return startingSector;
+        }
+        int numberOfChunks = howManyChunksNeeded(remainingBytes);
+        for (int i = 0; i < numberOfChunks; i++) {
+            int bytesFromPosition = i * header.getMiniSectorShift();
+            int bytesUpToPosition = Math.min((i + 1) * header.getMiniSectorShift(), data.length);
+            byte[] bytesToWrite = ArrayUtils.subarray(data, bytesFromPosition, bytesUpToPosition);
+            getDataHolderForNextChunk().writeAt(0, bytesToWrite);
+            int miniSectorPosition = miniStreamLength / header.getMiniSectorShift();
+            if(i == 0) {
+                miniFAT.registerSector(miniSectorPosition, lastSectorPosition);
+            } else {
+                miniFAT.registerSector(miniSectorPosition, miniSectorPosition - 1);
+            }
+            miniStreamLength += header.getMiniSectorShift();
+        }
+        return startingSector;
     }
 
     private DataView getDataHolderForNextChunk() {

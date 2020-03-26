@@ -21,7 +21,6 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
     private ColorFlag colorFlag;
     private int id;
     protected DirectoryEntryChain directoryEntryChain;
-    private final StreamRW streamReader;
 
     public interface FLAG_POSITION {
 
@@ -39,10 +38,9 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
         int STARTING_SECTOR_LOCATION = 116;
         int STREAM_SIZE = 120;
     }
-    protected DirectoryEntry(int id, DirectoryEntryChain directoryEntryChain, DataView view, StreamRW streamReader) {
+    protected DirectoryEntry(int id, DirectoryEntryChain directoryEntryChain, DataView view) {
         this.id = id;
         this.directoryEntryChain = directoryEntryChain;
-        this.streamReader = streamReader;
         this.view = view;
         Verify.verify(view.getSize() == ENTRY_LENGTH);
         int nameLength = Utils.toInt(view.subView(FLAG_POSITION.DIRECTORY_ENTRY_NAME_LENGTH, FLAG_POSITION.DIRECTORY_ENTRY_NAME_LENGTH + 2).getData());
@@ -51,10 +49,9 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
         colorFlag = ColorFlag.fromCode(view.subView(FLAG_POSITION.COLOR_FLAG, FLAG_POSITION.COLOR_FLAG +1).getData()[0]);
     }
 
-    protected DirectoryEntry(int id, String name, ColorFlag colorFlag, ObjectType objectType, DirectoryEntryChain directoryEntryChain, DataView view, StreamRW streamReader) {
+    protected DirectoryEntry(int id, String name, ColorFlag colorFlag, ObjectType objectType, DirectoryEntryChain directoryEntryChain, DataView view) {
         this.id = id;
         this.directoryEntryChain = directoryEntryChain;
-        this.streamReader = streamReader;
         this.view = view;
         setObjectType(objectType);
         setColorFlag(colorFlag);
@@ -152,38 +149,12 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
         return Utils.toInt(view.subView(FLAG_POSITION.RIGHT_SIBLING, FLAG_POSITION.RIGHT_SIBLING + 4).getData());
     }
 
-    public byte[] getStreamData() {
-        if(hasStreamData() && getStreamSize() > 0) {
-            return streamReader.read(getStreamStartingSector(), getStreamSize());
-        } else {
-            return new byte[0];
-        }
-    }
-
-    public void setStreamData(byte[] data) {
-        int startingLocation = streamReader.write(data);
-        setStreamStartingSector(startingLocation);
-        setStreamSize(data.length);
-    }
-
-    private void setStreamSize(int length) {
-        view.subView(FLAG_POSITION.STREAM_SIZE, FLAG_POSITION.STREAM_SIZE + 4).writeAt(0, Utils.toBytes(length, 4));
-    }
-
-    public boolean hasStreamData() {
-        return objectType == ObjectType.Stream && !Utils.isEndOfChain(getStreamStartingSector());
-    }
-
     public int getStreamStartingSector() {
         return Utils.toInt(view.subView(FLAG_POSITION.STARTING_SECTOR_LOCATION, FLAG_POSITION.STARTING_SECTOR_LOCATION + 4).getData());
     }
 
     public void setStreamStartingSector(int startingSector) {
         view.subView(FLAG_POSITION.STARTING_SECTOR_LOCATION, FLAG_POSITION.STARTING_SECTOR_LOCATION + 4).writeAt(0, Utils.toBytes(startingSector, 4));
-    }
-
-    public int getStreamSize() {
-        return Utils.toInt(view.subView(FLAG_POSITION.STREAM_SIZE, FLAG_POSITION.STREAM_SIZE + 4).getData());
     }
 
     public void traverse(Consumer<DirectoryEntry> action) {

@@ -2,14 +2,12 @@ package com.ifedorov.cfbf;
 
 import com.google.common.collect.Lists;
 import com.ifedorov.cfbf.alloc.FAT;
+import com.ifedorov.cfbf.stream.StreamHolder;
 import com.ifedorov.cfbf.stream.StreamRW;
 
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.stream.Collectors;
 
 import static com.ifedorov.cfbf.DirectoryEntry.UTF16_TERMINATING_BYTES;
 
@@ -19,15 +17,15 @@ public class DirectoryEntryChain {
     private FAT fat;
     private Header header;
     private LinkedList<Integer> sectorChain;
-    private StreamRW streamReader;
+    private StreamHolder streamHolder;
     private int directoryEntryCount;
 
-    public DirectoryEntryChain(Sectors sectors, FAT fat, Header header, StreamRW streamReader) {
+    public DirectoryEntryChain(Sectors sectors, FAT fat, Header header, StreamHolder streamHolder) {
         this.sectors = sectors;
         this.fat = fat;
         this.header = header;
         this.sectorChain = Lists.newLinkedList(fat.buildChain(header.getFirstDirectorySectorLocation()));
-        this.streamReader = streamReader;
+        this.streamHolder = streamHolder;
         readDirectoryEntryCount();
     }
 
@@ -59,11 +57,11 @@ public class DirectoryEntryChain {
         DataView view = sectors.sector(sectorChain.get(sectorNumber)).subView(shiftInsideSector, shiftInsideSector + 128);
         DirectoryEntry.ObjectType objectType = DirectoryEntry.ObjectType.fromCode(view.subView(DirectoryEntry.FLAG_POSITION.OBJECT_TYPE, DirectoryEntry.FLAG_POSITION.OBJECT_TYPE + 1).getData()[0]);
         if(objectType == DirectoryEntry.ObjectType.RootStorage) {
-            return (T) new RootStorageDirectoryEntry(i, this, view, streamReader);
+            return (T) new RootStorageDirectoryEntry(i, this, view);
         } else if(objectType == DirectoryEntry.ObjectType.Storage) {
-            return (T) new StorageDirectoryEntry(i, this, view, streamReader);
+            return (T) new StorageDirectoryEntry(i, this, view);
         } else {
-            return (T) new StreamDirectoryEntry(i, this, view, streamReader);
+            return (T) new StreamDirectoryEntry(i, this, view, streamHolder);
         }
     }
 
@@ -72,16 +70,16 @@ public class DirectoryEntryChain {
             throw new IllegalStateException("Root Storage should be the first Directory Entry");
         }
         DataView view = getViewForDirectoryEntry();
-        RootStorageDirectoryEntry rootStorageDirectoryEntry = new RootStorageDirectoryEntry(0, this, view, streamReader);
+        RootStorageDirectoryEntry rootStorageDirectoryEntry = new RootStorageDirectoryEntry(0, this, view);
         return rootStorageDirectoryEntry;
     }
 
     public StorageDirectoryEntry createStorage(String name, DirectoryEntry.ColorFlag colorFlag) {
-        return new StorageDirectoryEntry(directoryEntryCount, name, colorFlag, this, getViewForDirectoryEntry(), streamReader);
+        return new StorageDirectoryEntry(directoryEntryCount, name, colorFlag, this, getViewForDirectoryEntry());
     }
 
-    public DirectoryEntry createStream(String name, DirectoryEntry.ColorFlag colorFlag, byte[] data) {
-        DirectoryEntry streamEntry = new StreamDirectoryEntry(directoryEntryCount, name, colorFlag, this, getViewForDirectoryEntry(), streamReader);
+    public StreamDirectoryEntry createStream(String name, DirectoryEntry.ColorFlag colorFlag, byte[] data) {
+        StreamDirectoryEntry streamEntry = new StreamDirectoryEntry(directoryEntryCount, name, colorFlag, this, getViewForDirectoryEntry(), streamHolder);
         if(data.length > 0) {
             streamEntry.setStreamData(data);
         }

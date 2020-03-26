@@ -6,6 +6,7 @@ import com.ifedorov.cfbf.alloc.FAT;
 import com.ifedorov.cfbf.alloc.FATtoDIFATFacade;
 import com.ifedorov.cfbf.stream.MiniStreamRW;
 import com.ifedorov.cfbf.stream.RegularStreamRW;
+import com.ifedorov.cfbf.stream.StreamHolder;
 import com.ifedorov.cfbf.stream.StreamRW;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,41 +50,41 @@ class DirectoryEntryTest {
     void testDirectoryEntryShouldBe128BytesLong() {
         byte[] corruptedData = new byte[127];
         System.arraycopy(data, 0, corruptedData, 0, 127);
-        assertThrows(VerifyException.class, ()->new DirectoryEntry(0, directoryEntryChain, new DataView.SimpleDataView(corruptedData), streamRW));
+        assertThrows(VerifyException.class, ()->new DirectoryEntry(0, directoryEntryChain, new DataView.SimpleDataView(corruptedData)));
     }
 
     @Test
     void testDirectoryEntryShouldHaveValidColorFlag() {
         data[DirectoryEntry.FLAG_POSITION.COLOR_FLAG] = (byte) DirectoryEntry.ColorFlag.BLACK.code();
-        new DirectoryEntry(0, directoryEntryChain, new DataView.SimpleDataView(data), streamRW);
+        new DirectoryEntry(0, directoryEntryChain, new DataView.SimpleDataView(data));
         data[DirectoryEntry.FLAG_POSITION.COLOR_FLAG] = (byte) DirectoryEntry.ColorFlag.RED.code();
-        new DirectoryEntry(1, directoryEntryChain, new DataView.SimpleDataView(data), streamRW);
+        new DirectoryEntry(1, directoryEntryChain, new DataView.SimpleDataView(data));
         data[DirectoryEntry.FLAG_POSITION.COLOR_FLAG] = (byte) 2;
-        assertThrows(IllegalArgumentException.class, ()-> new DirectoryEntry(0, directoryEntryChain, new DataView.SimpleDataView(data), streamRW));
+        assertThrows(IllegalArgumentException.class, ()-> new DirectoryEntry(0, directoryEntryChain, new DataView.SimpleDataView(data)));
         data[DirectoryEntry.FLAG_POSITION.COLOR_FLAG] = (byte) -1;
-        assertThrows(IllegalArgumentException.class, ()-> new DirectoryEntry(1, directoryEntryChain, new DataView.SimpleDataView(data), streamRW));
+        assertThrows(IllegalArgumentException.class, ()-> new DirectoryEntry(1, directoryEntryChain, new DataView.SimpleDataView(data)));
     }
 
     @Test
     void testDirectoryEntryShouldHaveValidObjectType() {
         System.arraycopy(Utils.toBytes(DirectoryEntry.ObjectType.Storage.code(), 1), 0, data, DirectoryEntry.FLAG_POSITION.OBJECT_TYPE, 1);
-        new DirectoryEntry(0, directoryEntryChain, new DataView.SimpleDataView(data), streamRW);
+        new DirectoryEntry(0, directoryEntryChain, new DataView.SimpleDataView(data));
         System.arraycopy(Utils.toBytes(DirectoryEntry.ObjectType.RootStorage.code(), 1), 0, data, DirectoryEntry.FLAG_POSITION.OBJECT_TYPE, 1);
-        new DirectoryEntry(1, directoryEntryChain, new DataView.SimpleDataView(data), streamRW);
+        new DirectoryEntry(1, directoryEntryChain, new DataView.SimpleDataView(data));
         System.arraycopy(Utils.toBytes(DirectoryEntry.ObjectType.Stream.code(), 1), 0, data, DirectoryEntry.FLAG_POSITION.OBJECT_TYPE, 1);
-        new DirectoryEntry(2, directoryEntryChain, new DataView.SimpleDataView(data), streamRW);
+        new DirectoryEntry(2, directoryEntryChain, new DataView.SimpleDataView(data));
         System.arraycopy(Utils.toBytes(DirectoryEntry.ObjectType.Unknown.code(), 1), 0, data, DirectoryEntry.FLAG_POSITION.OBJECT_TYPE, 1);
-        new DirectoryEntry(3, directoryEntryChain, new DataView.SimpleDataView(data), streamRW);
+        new DirectoryEntry(3, directoryEntryChain, new DataView.SimpleDataView(data));
         System.arraycopy(Utils.toBytes(-1, 1), 0, data, DirectoryEntry.FLAG_POSITION.OBJECT_TYPE, 1);
-        assertThrows(IllegalArgumentException.class, ()->new DirectoryEntry(4, directoryEntryChain, new DataView.SimpleDataView(data), streamRW));
+        assertThrows(IllegalArgumentException.class, ()->new DirectoryEntry(4, directoryEntryChain, new DataView.SimpleDataView(data)));
     }
 
     @Test
     void testDirectoryEntryNameLength() {
         System.arraycopy(Utils.toBytes(65, 2), 0, data, DirectoryEntry.FLAG_POSITION.DIRECTORY_ENTRY_NAME_LENGTH, 2);
-        assertThrows(VerifyException.class, () -> new DirectoryEntry(0, directoryEntryChain, new DataView.SimpleDataView(data), streamRW));
+        assertThrows(VerifyException.class, () -> new DirectoryEntry(0, directoryEntryChain, new DataView.SimpleDataView(data)));
         System.arraycopy(Utils.toBytes(15, 2), 0, data, DirectoryEntry.FLAG_POSITION.DIRECTORY_ENTRY_NAME_LENGTH, 2);
-        assertEquals(15, new DirectoryEntry(1, directoryEntryChain, new DataView.SimpleDataView(data), streamRW).getDirectoryEntryNameLength());
+        assertEquals(15, new DirectoryEntry(1, directoryEntryChain, new DataView.SimpleDataView(data)).getDirectoryEntryNameLength());
     }
 
     @Test
@@ -97,7 +98,7 @@ class DirectoryEntryTest {
         System.arraycopy(Utils.toBytes(1, 4), 0, data, DirectoryEntry.FLAG_POSITION.CHILD, 4);
         System.arraycopy(Utils.toBytes(2, 4), 0, data, DirectoryEntry.FLAG_POSITION.LEFT_SIBLING, 4);
         System.arraycopy(Utils.toBytes(3, 4), 0, data, DirectoryEntry.FLAG_POSITION.RIGHT_SIBLING, 4);
-        DirectoryEntry directoryEntry = new DirectoryEntry(0, directoryEntryChain, new DataView.SimpleDataView(data), streamRW);
+        DirectoryEntry directoryEntry = new DirectoryEntry(0, directoryEntryChain, new DataView.SimpleDataView(data));
         assertEquals(child, directoryEntry.getChild().orElseThrow(() -> new RuntimeException("child has to be presented")));
         assertEquals(leftSibling, directoryEntry.getLeftSibling().orElseThrow(() -> new RuntimeException("child has to be presented")));
         assertEquals(rightSibling, directoryEntry.getRightSibling().orElseThrow(() -> new RuntimeException("child has to be presented")));
@@ -108,7 +109,7 @@ class DirectoryEntryTest {
         System.arraycopy(Utils.FREESECT_MARK_OR_NOSTREAM, 0, data, DirectoryEntry.FLAG_POSITION.CHILD, 4);
         System.arraycopy(Utils.FREESECT_MARK_OR_NOSTREAM, 0, data, DirectoryEntry.FLAG_POSITION.LEFT_SIBLING, 4);
         System.arraycopy(Utils.FREESECT_MARK_OR_NOSTREAM, 0, data, DirectoryEntry.FLAG_POSITION.RIGHT_SIBLING, 4);
-        DirectoryEntry directoryEntry = new DirectoryEntry(0, directoryEntryChain, new DataView.SimpleDataView(data), streamRW);
+        DirectoryEntry directoryEntry = new DirectoryEntry(0, directoryEntryChain, new DataView.SimpleDataView(data));
         assertFalse(directoryEntry.getChild().isPresent());
         assertFalse(directoryEntry.getLeftSibling().isPresent());
         assertFalse(directoryEntry.getRightSibling().isPresent());
@@ -117,9 +118,9 @@ class DirectoryEntryTest {
 
     @Test
     void testSetSiblings() {
-        DirectoryEntry directoryEntry = new DirectoryEntry(0, directoryEntryChain, new DataView.SimpleDataView(data), streamRW);
-        DirectoryEntry rightSibling = new DirectoryEntry(1, directoryEntryChain, new DataView.SimpleDataView(Utils.copy(data)), streamRW);
-        DirectoryEntry leftSibling = new DirectoryEntry(2, directoryEntryChain, new DataView.SimpleDataView(Utils.copy(data)), streamRW);
+        DirectoryEntry directoryEntry = new DirectoryEntry(0, directoryEntryChain, new DataView.SimpleDataView(data));
+        DirectoryEntry rightSibling = new DirectoryEntry(1, directoryEntryChain, new DataView.SimpleDataView(Utils.copy(data)));
+        DirectoryEntry leftSibling = new DirectoryEntry(2, directoryEntryChain, new DataView.SimpleDataView(Utils.copy(data)));
         when(directoryEntryChain.getEntryById(1)).thenReturn(rightSibling);
         when(directoryEntryChain.getEntryById(2)).thenReturn(leftSibling);
         directoryEntry.setRightSibling(rightSibling);
@@ -134,8 +135,8 @@ class DirectoryEntryTest {
 
     @Test
     void testCompareDirectoryEntries() {
-        DirectoryEntry one = new DirectoryEntry(0, directoryEntryChain, new DataView.SimpleDataView(data), streamRW);
-        DirectoryEntry two = new DirectoryEntry(1, directoryEntryChain, new DataView.SimpleDataView(Utils.copy(data)), streamRW);
+        DirectoryEntry one = new DirectoryEntry(0, directoryEntryChain, new DataView.SimpleDataView(data));
+        DirectoryEntry two = new DirectoryEntry(1, directoryEntryChain, new DataView.SimpleDataView(Utils.copy(data)));
         one.setDirectoryEntryName("a");
         two.setDirectoryEntryName("b");
         assertEquals(-1, one.compareTo(two));
@@ -149,7 +150,7 @@ class DirectoryEntryTest {
 
     @Test
     void testSetDirectoryEntryName() {
-        DirectoryEntry directoryEntry = new DirectoryEntry(0, directoryEntryChain, new DataView.SimpleDataView(data), streamRW);
+        DirectoryEntry directoryEntry = new DirectoryEntry(0, directoryEntryChain, new DataView.SimpleDataView(data));
         directoryEntry.setDirectoryEntryName("a");
         assertEquals("a", directoryEntry.getDirectoryEntryName());
         assertEquals(4, directoryEntry.getDirectoryEntryNameLength());
@@ -171,8 +172,8 @@ class DirectoryEntryTest {
         Sectors sectors = new Sectors(rootView, header);
         FAT fat = new FAT(sectors, header, faTtoDIFATFacade);
         RegularStreamRW regularStreamRW = new RegularStreamRW(fat, sectors, header);
-        DirectoryEntryChain directoryEntryChain = new DirectoryEntryChain(sectors, fat, header, regularStreamRW);
-        DirectoryEntry stream = directoryEntryChain.createStream("1", DirectoryEntry.ColorFlag.BLACK, Utils.initializedWith(2000, 1));
+        DirectoryEntryChain directoryEntryChain = new DirectoryEntryChain(sectors, fat, header, new StreamHolder(regularStreamRW, null, 2000));
+        StreamDirectoryEntry stream = directoryEntryChain.createStream("1", DirectoryEntry.ColorFlag.BLACK, Utils.initializedWith(2000, 1));
         assertFalse(stream.getLeftSibling().isPresent());
         assertFalse(stream.getRightSibling().isPresent());
         assertArrayEquals(Utils.initializedWith(2000, 1), stream.getStreamData());

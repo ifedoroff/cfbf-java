@@ -1,6 +1,7 @@
 package com.ifedorov.cfbf;
 
 import com.google.common.base.VerifyException;
+import com.google.common.collect.Lists;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -44,6 +45,30 @@ public class DataViewTest {
         assertThrows(IndexOutOfBoundsException.class, () -> dataView.subView(0, 10).subView(-1));
         assertThrows(IndexOutOfBoundsException.class, () -> dataView.subView(0, 10).subView(11));
         assertEquals(10, dataView.subView(50, 100).subView(0, 10).getSize());
+    }
+
+    @Test
+    void testVariableSizeChunkedDataView() {
+        DataView.VariableSizeChunkedDataView dataView = new DataView.VariableSizeChunkedDataView(
+                Lists.newArrayList(
+                        new DataView.SimpleDataView(new byte[]{0,1,2}),
+                        new DataView.SimpleDataView(new byte[]{3,4,5,6,7}),
+                        new DataView.SimpleDataView(new byte[]{8,9})
+                )
+        );
+        assertArrayEquals(new byte[]{0,1,2,3,4,5,6,7,8,9}, dataView.getData());
+        assertEquals(10, dataView.getSize());
+        assertArrayEquals(new byte[]{0,1,2}, dataView.subView(0, 3).getData());
+        assertArrayEquals(new byte[]{3,4,5,6,7,8,9}, dataView.subView(3).getData());
+        assertArrayEquals(new byte[]{3,4,5}, dataView.subView(3, 6).getData());
+        assertArrayEquals(new byte[]{3,4,5,6,7}, dataView.subView(3, 8).getData());
+        assertArrayEquals(new byte[]{3,4,5,6,7, 8}, dataView.subView(3, 9).getData());
+        dataView.writeAt(5, new byte[]{15});
+        assertArrayEquals(new byte[]{15}, dataView.readAt(5, 1));
+        dataView.writeAt(5, new byte[]{13,13,13,13,13});
+        assertArrayEquals(new byte[]{13,13,13,13,13}, dataView.readAt(5, 5));
+        dataView.fill(new byte[]{30});
+        assertArrayEquals(Utils.initializedWith(10, 30), dataView.getData());
     }
 
 }

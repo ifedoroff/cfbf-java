@@ -8,7 +8,7 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
+import java.util.*;
 
 public interface DataView {
     DataView writeAt(int position, byte[] bytes);
@@ -27,7 +27,7 @@ public interface DataView {
 //    };
 
     static DataView empty() {
-        return new ChunkedDataView(Header.SECTOR_SHIFT_VERSION_3_INT);
+        return new FixedSizeChunkedDataView(Header.SECTOR_SHIFT_VERSION_3_INT);
     }
 
     static DataView from(InputStream is) {
@@ -39,18 +39,18 @@ public interface DataView {
     }
 
     static DataView from(byte[] data) {
-        ChunkedDataView dataView = new ChunkedDataView(Header.SECTOR_SHIFT_VERSION_3_INT, data);
+        FixedSizeChunkedDataView dataView = new FixedSizeChunkedDataView(Header.SECTOR_SHIFT_VERSION_3_INT, data);
         return dataView;
     }
 
-    class ChunkedDataView implements DataView {
+    class FixedSizeChunkedDataView implements DataView {
         private int chunkSize;
         private List<DataView> chunks = Lists.newArrayList();
 
-        private ChunkedDataView(int chunkSize) {
+        private FixedSizeChunkedDataView(int chunkSize) {
             this.chunkSize = chunkSize;
         }
-        private ChunkedDataView(int chunkSize, byte[] data) {
+        private FixedSizeChunkedDataView(int chunkSize, byte[] data) {
             this(chunkSize);
             Verify.verify(data.length % chunkSize == 0);
             int dataLength = data.length;
@@ -60,7 +60,7 @@ public interface DataView {
             }
         }
 
-        private ChunkedDataView(int chunkSize, List<DataView> chunks) {
+        public FixedSizeChunkedDataView(int chunkSize, List<DataView> chunks) {
             this.chunkSize = chunkSize;
             this.chunks.addAll(chunks);
         }
@@ -120,6 +120,123 @@ public interface DataView {
         @Override
         public byte[] readAt(int position, int length) {
             throw new UnsupportedOperationException();
+        }
+    }
+
+    public static class VariableSizeChunkedDataView implements DataView {
+
+        private final TreeMap<Integer, DataView> viewMap = new TreeMap<>();
+        private int size;
+
+        public VariableSizeChunkedDataView(Iterable<DataView> views) {
+            size = 0;
+            for (DataView view : views) {
+                size += view.getSize();
+                viewMap.put(size - 1, view);
+            }
+        }
+
+        @Override
+        public DataView writeAt(int position, byte[] bytes) {
+            Verify.verify(position >= 0, "Cannot write at index < 0: start = " + position);
+            Verify.verify(position + bytes.length <= size, String.format("Sub-view should has end index < %s: end = %s", size, position + bytes.length - 1));
+            int startingPositionInFirstView;
+            Integer beforeFirst = viewMap.lowerKey(position);
+            if(beforeFirst == null) {
+                startingPositionInFirstView = position;
+            } else {
+                startingPositionInFirstView = position - beforeFirst - 1;
+            }
+            int remaining = bytes.length;
+            Map.Entry<Integer, DataView> currentEntry = viewMap.ceilingEntry(position);
+            int bytesToWrite = Math.min(currentEntry.getValue().subView(startingPositionInFirstView).getSize(), remaining);
+            remaining -= bytesToWrite;
+            currentEntry.getValue().writeAt(startingPositionInFirstView, ArrayUtils.subarray(bytes, 0, bytesToWrite));
+            while(remaining > 0) {
+                if((currentEntry = viewMap.higherEntry(currentEntry.getKey())) == null) {
+                    throw new IllegalArgumentException();
+                } else {
+                    bytesToWrite = Math.min(currentEntry.getValue().getSize(), remaining);
+                    remaining -= bytesToWrite;
+                    currentEntry.getValue().writeAt(0, ArrayUtils.subarray(bytes, 0, bytesToWrite));
+                }
+            }
+            return this;
+        }
+
+        @Override
+        public int getSize() {
+            return size;
+        }
+
+        @Override
+        public byte[] getData() {
+            byte[] result = new byte[0];
+            for (DataView view : viewMap.values()) {
+                result = ArrayUtils.addAll(result, view.getData());
+            }
+            return result;
+        }
+
+        @Override
+        public DataView subView(int start, int end) {
+            Verify.verify(start >= 0, "Sub-view should has starting index >= 0: start = " + start);
+            Verify.verify(end <= size, String.format("Sub-view should has end index < %s: end = %s", size, end));
+            if(start == end) {
+                return new SimpleDataView(new byte[0]);
+            }
+            int first = start;
+            int last = end - 1;
+            Map.Entry<Integer, DataView> firstEntry = viewMap.ceilingEntry(start);
+            Map.Entry<Integer, DataView> lastEntry = viewMap.ceilingEntry(last);
+            int startingPositionInFirstView;
+            Integer beforeFirst = viewMap.lowerKey(start);
+            if(beforeFirst == null) {
+                startingPositionInFirstView = start;
+            } else {
+                startingPositionInFirstView = start - beforeFirst - 1;
+            }
+            if(firstEntry.equals(lastEntry)) {
+                if(beforeFirst == null) {
+                    return firstEntry.getValue().subView(startingPositionInFirstView, end);
+                } else {
+                    return firstEntry.getValue().subView(startingPositionInFirstView, end - beforeFirst - 1);
+                }
+            } else {
+                Integer beforeLast = viewMap.lowerKey(last);
+                List<DataView> result = Lists.newArrayList();
+                result.add(firstEntry.getValue().subView(startingPositionInFirstView));
+                result.addAll(viewMap.subMap(firstEntry.getKey(), false, lastEntry.getKey(), false).values());
+                result.add(lastEntry.getValue().subView(0, end - beforeLast - 1));
+                return new VariableSizeChunkedDataView(result);
+            }
+        }
+
+        @Override
+        public DataView subView(int start) {
+            Verify.verify(start >= 0, "Sub-view should has starting index >= 0: start = " + start);
+            Map.Entry<Integer, DataView> firstEntry = viewMap.ceilingEntry(start);
+            Map.Entry<Integer, DataView> previousEntry = viewMap.lowerEntry(start);
+            int startingPositionInFirstView = previousEntry.getKey().equals(firstEntry.getKey()) ? start : start - previousEntry.getKey() - 1;
+            return new VariableSizeChunkedDataView(
+                    Iterables.concat(Lists.newArrayList(firstEntry.getValue().subView(startingPositionInFirstView)), viewMap.tailMap(firstEntry.getKey(), false).values())
+            );
+        }
+
+        @Override
+        public DataView allocate(int length) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public DataView fill(byte[] filler) {
+            viewMap.forEach((key, view) -> view.fill(filler));
+            return this;
+        }
+
+        @Override
+        public byte[] readAt(int position, int length) {
+            return subView(position, position + length).getData();
         }
     }
 

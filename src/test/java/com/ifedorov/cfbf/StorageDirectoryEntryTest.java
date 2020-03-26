@@ -1,6 +1,6 @@
 package com.ifedorov.cfbf;
 
-import com.ifedorov.cfbf.stream.StreamRW;
+import com.ifedorov.cfbf.stream.StreamHolder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -9,7 +9,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyByte;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -18,7 +17,7 @@ class StorageDirectoryEntryTest {
     @Mock
     DirectoryEntryChain directoryEntryChain;
     @Mock
-    StreamRW streamRW;
+    StreamHolder streamHolder;
 
     @BeforeEach
     void init() {
@@ -33,10 +32,10 @@ class StorageDirectoryEntryTest {
     @Test
     public void testAddChildren() {
 
-        RootStorageDirectoryEntry storage = new RootStorageDirectoryEntry(0, directoryEntryChain, DataView.from(Utils.copy(data)).subView(0, 128), streamRW);
-        DirectoryEntry child1 = new DirectoryEntry(1, "a", DirectoryEntry.ColorFlag.RED, DirectoryEntry.ObjectType.Stream, directoryEntryChain, DataView.from(Utils.copy(data)), streamRW);
-        DirectoryEntry child2 = new DirectoryEntry(2, "ab", DirectoryEntry.ColorFlag.RED, DirectoryEntry.ObjectType.Stream, directoryEntryChain, DataView.from(Utils.copy(data)), streamRW);
-        StorageDirectoryEntry child3 = new StorageDirectoryEntry(3, "b", DirectoryEntry.ColorFlag.RED, directoryEntryChain, DataView.from(Utils.copy(data)), streamRW);
+        RootStorageDirectoryEntry storage = new RootStorageDirectoryEntry(0, directoryEntryChain, DataView.from(Utils.copy(data)).subView(0, 128));
+        StreamDirectoryEntry child1 = new StreamDirectoryEntry(1, "a", DirectoryEntry.ColorFlag.RED, directoryEntryChain, DataView.from(Utils.copy(data)), streamHolder);
+        StreamDirectoryEntry child2 = new StreamDirectoryEntry(2, "ab", DirectoryEntry.ColorFlag.RED, directoryEntryChain, DataView.from(Utils.copy(data)), streamHolder);
+        StorageDirectoryEntry child3 = new StorageDirectoryEntry(3, "b", DirectoryEntry.ColorFlag.RED, directoryEntryChain, DataView.from(Utils.copy(data)));
         when(directoryEntryChain.createStream("a", DirectoryEntry.ColorFlag.RED, new byte[1])).thenReturn(child1);
         when(directoryEntryChain.createStream("ab", DirectoryEntry.ColorFlag.RED, new byte[1])).thenReturn(child2);
         when(directoryEntryChain.createStorage("b", DirectoryEntry.ColorFlag.RED)).thenReturn(child3);
@@ -65,8 +64,8 @@ class StorageDirectoryEntryTest {
         storage1.addStream("stream11", new byte[]{5,4,3,2,1});
         assertNotNull(rootStorage.findChild((directoryEntry -> directoryEntry.getDirectoryEntryName().equalsIgnoreCase("storage1"))));
         assertNotNull(rootStorage.findChild((directoryEntry -> directoryEntry.getDirectoryEntryName().equalsIgnoreCase("storage2"))));
-        assertArrayEquals(new byte[]{1,2,3,4,5}, rootStorage.findChild((directoryEntry -> directoryEntry.getDirectoryEntryName().equalsIgnoreCase("stream1"))).getStreamData());
-        assertArrayEquals(new byte[]{5,4,3,2,1}, storage1.findChild((directoryEntry -> directoryEntry.getDirectoryEntryName().equalsIgnoreCase("stream11"))).getStreamData());
+        assertArrayEquals(new byte[]{1,2,3,4,5}, rootStorage.<StreamDirectoryEntry>findChild((directoryEntry -> directoryEntry.getDirectoryEntryName().equalsIgnoreCase("stream1"))).getStreamData());
+        assertArrayEquals(new byte[]{5,4,3,2,1}, storage1.<StreamDirectoryEntry>findChild((directoryEntry -> directoryEntry.getDirectoryEntryName().equalsIgnoreCase("stream11"))).getStreamData());
     }
 
     @Test

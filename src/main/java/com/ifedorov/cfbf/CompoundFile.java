@@ -4,14 +4,13 @@ import com.ifedorov.cfbf.alloc.DIFAT;
 import com.ifedorov.cfbf.alloc.FAT;
 import com.ifedorov.cfbf.alloc.FATtoDIFATFacade;
 import com.ifedorov.cfbf.alloc.MiniFAT;
-import com.ifedorov.cfbf.stream.ConditionalStreamRW;
+import com.ifedorov.cfbf.stream.StreamHolder;
 import com.ifedorov.cfbf.stream.MiniStreamRW;
 import com.ifedorov.cfbf.stream.RegularStreamRW;
 import com.ifedorov.cfbf.stream.StreamRW;
 
 import java.io.*;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public class CompoundFile {
 
@@ -46,14 +45,32 @@ public class CompoundFile {
             }
 
             @Override
+            public byte[] read(int startingSector, int from, int to) {
+                return miniStreamRW.read(startingSector, from, to);
+            }
+
+            @Override
             public int write(byte[] data) {
                 int firstSectorLocation = miniStreamRW.write(data);
                 setMiniStreamFirstSectorLocation(miniStreamRW.getMiniStreamFirstSectorPosition());
                 setMiniStreamLength(miniStreamRW.getMiniStreamLength());
                 return firstSectorLocation;
             }
+
+            @Override
+            public void writeAt(int startingSector, int position, byte[] data) {
+                miniStreamRW.writeAt(startingSector, position, data);
+            }
+
+            @Override
+            public int append(int startingSector, int currentSize, byte[] data) {
+                int firstSectorLocation = miniStreamRW.append(startingSector, currentSize, data);
+                setMiniStreamFirstSectorLocation(miniStreamRW.getMiniStreamFirstSectorPosition());
+                setMiniStreamLength(miniStreamRW.getMiniStreamLength());
+                return firstSectorLocation;
+            }
         };
-        ConditionalStreamRW streamReader = new ConditionalStreamRW(
+        StreamHolder streamReader = new StreamHolder(
                 new RegularStreamRW(fat, sectors, header),
                 listenableMiniStream,
                 header.getMiniStreamCutoffSize()
@@ -125,7 +142,7 @@ public class CompoundFile {
                     StorageDirectoryEntry copy = parent.addStorage(directoryEntry.getDirectoryEntryName());
                     ((StorageDirectoryEntry) directoryEntry).eachChild(copyConsumer(copy));
                 } else {
-                    parent.addStream(directoryEntry.getDirectoryEntryName(), directoryEntry.getStreamData());
+                    parent.addStream(directoryEntry.getDirectoryEntryName(), ((StreamDirectoryEntry)directoryEntry).getStreamData());
                 }
             }
         };

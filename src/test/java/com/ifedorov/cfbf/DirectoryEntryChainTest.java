@@ -3,8 +3,8 @@ package com.ifedorov.cfbf;
 import com.google.common.collect.Lists;
 import com.ifedorov.cfbf.alloc.FAT;
 import com.ifedorov.cfbf.alloc.FATtoDIFATFacade;
+import com.ifedorov.cfbf.stream.StreamHolder;
 import com.ifedorov.cfbf.stream.StreamRW;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -20,7 +20,7 @@ import static org.mockito.Mockito.*;
 class DirectoryEntryChainTest {
 
     @Mock Sectors sectors;
-    @Mock StreamRW streamRW;
+    @Mock StreamHolder streamHolder;
     @Mock FAT fat;
     @Mock Header header;
     @Mock FATtoDIFATFacade faTtoDIFATFacade;
@@ -31,7 +31,7 @@ class DirectoryEntryChainTest {
         Header header = Header.empty(rootView.allocate(Header.HEADER_LENGTH));
         Sectors sectors = new Sectors(rootView, header);
         FAT fat = new FAT(sectors, header, faTtoDIFATFacade);
-        DirectoryEntryChain directoryEntryChain = new DirectoryEntryChain(sectors, fat, header, streamRW);
+        DirectoryEntryChain directoryEntryChain = new DirectoryEntryChain(sectors, fat, header, streamHolder);
         RootStorageDirectoryEntry rootStorage = directoryEntryChain.createRootStorage();
         StorageDirectoryEntry first_after_the_root = directoryEntryChain.createStorage("first after the root", DirectoryEntry.ColorFlag.RED);
         StorageDirectoryEntry second_after_the_root = directoryEntryChain.createStorage("second after the root", DirectoryEntry.ColorFlag.BLACK);
@@ -46,7 +46,7 @@ class DirectoryEntryChainTest {
     void testShouldThrowExceptionIfNoSuchDirectoryEntryExists() {
         when(fat.buildChain(anyInt())).thenReturn(Lists.newArrayList());
         when(header.getFirstDirectorySectorLocation()).thenReturn(Utils.ENDOFCHAIN_MARK_INT);
-        DirectoryEntryChain directoryEntryChain = new DirectoryEntryChain(sectors, fat, header, streamRW);
+        DirectoryEntryChain directoryEntryChain = new DirectoryEntryChain(sectors, fat, header, streamHolder);
         assertThrows(NoSuchElementException.class, () -> directoryEntryChain.getEntryById(0));
         assertThrows(NoSuchElementException.class, () -> directoryEntryChain.getEntryById(-1));
     }
@@ -57,7 +57,7 @@ class DirectoryEntryChainTest {
         Header header = Header.empty(rootView.allocate(Header.HEADER_LENGTH));
         Sectors sectors = new Sectors(rootView, header);
         FAT fat = new FAT(sectors, header, faTtoDIFATFacade);
-        DirectoryEntryChain directoryEntryChain = new DirectoryEntryChain(sectors, fat, header, streamRW);
+        DirectoryEntryChain directoryEntryChain = new DirectoryEntryChain(sectors, fat, header, streamHolder);
         RootStorageDirectoryEntry rootStorage = directoryEntryChain.createRootStorage();
         assertEquals("Root Entry", rootStorage.getDirectoryEntryName());
         assertEquals(0, rootStorage.getId());
@@ -73,7 +73,7 @@ class DirectoryEntryChainTest {
         when(sectors.sector(1)).thenReturn(firstSector);
         when(fat.buildChain(anyInt()))
                 .thenReturn(Lists.newArrayList(0, 1));
-        DirectoryEntryChain directoryEntryChain = new DirectoryEntryChain(sectors, fat, header, streamRW);
+        DirectoryEntryChain directoryEntryChain = new DirectoryEntryChain(sectors, fat, header, streamHolder);
         StorageDirectoryEntry storage = directoryEntryChain.createStorage("storage", DirectoryEntry.ColorFlag.RED);
         assertEquals("storage", storage.getDirectoryEntryName());
         assertEquals(DirectoryEntry.ObjectType.Storage, storage.getObjectType());
@@ -89,7 +89,7 @@ class DirectoryEntryChainTest {
         when(sectors.allocate()).thenReturn(firstSector);
         when(fat.buildChain(anyInt()))
                 .thenReturn(Lists.newArrayList(0));
-        DirectoryEntryChain directoryEntryChain = new DirectoryEntryChain(sectors, fat, header, streamRW);
+        DirectoryEntryChain directoryEntryChain = new DirectoryEntryChain(sectors, fat, header, streamHolder);
         StorageDirectoryEntry storage = directoryEntryChain.createStorage("storage", DirectoryEntry.ColorFlag.RED);
         verify(sectors, times(1)).allocate();
         assertEquals("storage", storage.getDirectoryEntryName());
@@ -103,7 +103,7 @@ class DirectoryEntryChainTest {
         Header header = Header.empty(rootView.allocate(Header.HEADER_LENGTH));
         Sectors sectors = new Sectors(rootView, header);
         FAT fat = spy(new FAT(sectors, header, faTtoDIFATFacade));
-        DirectoryEntryChain directoryEntryChain = new DirectoryEntryChain(sectors, fat, header, streamRW);
+        DirectoryEntryChain directoryEntryChain = new DirectoryEntryChain(sectors, fat, header, streamHolder);
         directoryEntryChain.createRootStorage();
         IntStream.range(0, 10).forEach((i) -> directoryEntryChain.createStorage("storage" + i, DirectoryEntry.ColorFlag.BLACK));
         int firstDirectorySectorLocation = header.getFirstDirectorySectorLocation();

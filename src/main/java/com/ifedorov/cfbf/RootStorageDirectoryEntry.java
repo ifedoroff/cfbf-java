@@ -10,8 +10,8 @@ public class RootStorageDirectoryEntry extends StorageDirectoryEntry {
     public static final String NAME = "Root Entry";
     public static final int ID = 0;
 
-    public RootStorageDirectoryEntry(int id, DirectoryEntryChain directoryEntryChain, DataView view, StreamRW streamReader) {
-        super(id, NAME, ColorFlag.BLACK, ObjectType.RootStorage, directoryEntryChain, view, streamReader);
+    public RootStorageDirectoryEntry(int id, DirectoryEntryChain directoryEntryChain, DataView view) {
+        super(id, NAME, ColorFlag.BLACK, ObjectType.RootStorage, directoryEntryChain, view);
         this.getChild().ifPresent(child -> {
             tree.root(new DirectoryEntryNode(child, Node.Color.BLACK));
         });

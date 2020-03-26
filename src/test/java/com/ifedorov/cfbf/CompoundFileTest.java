@@ -13,7 +13,6 @@ class CompoundFileTest {
         assertFalse(rootStorage.getLeftSibling().isPresent());
         assertFalse(rootStorage.getRightSibling().isPresent());
         assertFalse(rootStorage.getChild().isPresent());
-        assertEquals(0 ,rootStorage.getStreamSize());
         assertEquals(RootStorageDirectoryEntry.NAME, rootStorage.getDirectoryEntryName());
         assertEquals(10, rootStorage.getDirectoryEntryNameLengthUTF8());
     }

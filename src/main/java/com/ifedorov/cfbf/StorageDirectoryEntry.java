@@ -27,17 +27,17 @@ public class StorageDirectoryEntry extends DirectoryEntry {
     };
     protected final RedBlackDirectoryEntryTree tree = new RedBlackDirectoryEntryTree(NODE_FACTORY);
 
-    public StorageDirectoryEntry(int id, DirectoryEntryChain directoryEntryChain, DataView view, StreamRW streamReader) {
-        super(id, directoryEntryChain, view, streamReader);
+    public StorageDirectoryEntry(int id, DirectoryEntryChain directoryEntryChain, DataView view) {
+        super(id, directoryEntryChain, view);
         this.getChild().ifPresent(child -> tree.root(new DirectoryEntryNode(child, Node.Color.BLACK)));
     }
 
-    public StorageDirectoryEntry(int id, String name, ColorFlag colorFlag, ObjectType objectType, DirectoryEntryChain directoryEntryChain, DataView view, StreamRW streamReader) {
-        super(id, name, colorFlag, objectType, directoryEntryChain, view, streamReader);
+    public StorageDirectoryEntry(int id, String name, ColorFlag colorFlag, ObjectType objectType, DirectoryEntryChain directoryEntryChain, DataView view) {
+        super(id, name, colorFlag, objectType, directoryEntryChain, view);
     }
 
-    public StorageDirectoryEntry(int id, String name, ColorFlag colorFlag, DirectoryEntryChain directoryEntryChain, DataView view, StreamRW streamReader) {
-        super(id, name, colorFlag, ObjectType.Storage, directoryEntryChain, view, streamReader);
+    public StorageDirectoryEntry(int id, String name, ColorFlag colorFlag, DirectoryEntryChain directoryEntryChain, DataView view) {
+        super(id, name, colorFlag, ObjectType.Storage, directoryEntryChain, view);
     }
 
     public class RedBlackDirectoryEntryTree extends RedBlackTree<DirectoryEntry, DirectoryEntryNode>{
@@ -63,7 +63,7 @@ public class StorageDirectoryEntry extends DirectoryEntry {
         return (T) entry;
     }
 
-    public DirectoryEntry addStream(String name, byte[] data) {
+    public StreamDirectoryEntry addStream(String name, byte[] data) {
         return addChild(directoryEntryChain.createStream(name, ColorFlag.RED, data));
     }
 
@@ -71,10 +71,10 @@ public class StorageDirectoryEntry extends DirectoryEntry {
         return addChild(directoryEntryChain.createStorage(name, ColorFlag.RED));
     }
 
-    public DirectoryEntry findChild(Predicate<DirectoryEntry> predicate) {
+    public <T extends DirectoryEntry> T findChild(Predicate<DirectoryEntry> predicate) {
         AtomicReference<DirectoryEntry> result = new AtomicReference<>();
         eachChild((directoryEntry) -> result.set(directoryEntry), predicate);
-        return result.get();
+        return (T)result.get();
     }
 
     public List<DirectoryEntry> findChildren(Predicate<DirectoryEntry> predicate) {
