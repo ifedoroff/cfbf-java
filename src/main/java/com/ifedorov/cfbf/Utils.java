@@ -9,6 +9,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -41,6 +42,30 @@ public class Utils {
             result |= (b[i] & 0xFF);
         }
         return result;
+    }
+
+    public static long toLongBE(byte[] b) {
+        long result = 0;
+        for (int i = 0; i < b.length; i++) {
+            result <<= 8;
+            result |= (b[i] & 0xFF);
+        }
+        return result;
+    }
+
+    public static UUID uuidLE(byte[] sourceBytes) {
+        byte[] mostSignificant = new byte[8];
+        mostSignificant[0] = sourceBytes[3];
+        mostSignificant[1] = sourceBytes[2];
+        mostSignificant[2] = sourceBytes[1];
+        mostSignificant[3] = sourceBytes[0];
+        mostSignificant[4] = sourceBytes[5];
+        mostSignificant[5] = sourceBytes[4];
+        mostSignificant[6] = sourceBytes[7];
+        mostSignificant[7] = sourceBytes[6];
+        byte[] leastSignificant = new byte[8];
+        System.arraycopy(sourceBytes, 8, leastSignificant, 0, 8);
+        return new UUID(Utils.toLongBE(mostSignificant), Utils.toLongBE(leastSignificant));
     }
 
     public static int toInt(byte[] bytes) {
