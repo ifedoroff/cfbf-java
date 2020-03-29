@@ -3,7 +3,6 @@ package com.ifedorov.cfbf;
 import com.google.common.base.Verify;
 import com.google.common.collect.Lists;
 
-import javax.rmi.CORBA.Util;
 import java.util.Arrays;
 import java.util.List;
 
@@ -11,14 +10,14 @@ import static com.ifedorov.cfbf.Header.FLAG_POSITION.*;
 
 public class Header {
 
-    public static final byte[] HEADER_SIGNATURE = Utils.toBytes(0xE11AB1A1E011CFD0l, 8);
-    public static final byte[] MAJOR_VERSION_3 = Utils.toBytes(0x0003, 2);
-    public static final byte[] MINOR_VERSION_3 = Utils.toBytes(0x003E, 2);
-    public static final byte[] BYTE_ORDER_LITTLE_ENDIAN = Utils.toBytes(0xfffe, 2);
-    public static final byte[] SECTOR_SHIFT_VERSION_3 = Utils.toBytes(0x0009, 2);
+    public static final byte[] HEADER_SIGNATURE = Utils.toBytesLE(0xE11AB1A1E011CFD0l, 8);
+    public static final byte[] MAJOR_VERSION_3 = Utils.toBytesLE(0x0003, 2);
+    public static final byte[] MINOR_VERSION_3 = Utils.toBytesLE(0x003E, 2);
+    public static final byte[] BYTE_ORDER_LITTLE_ENDIAN = Utils.toBytesLE(0xfffe, 2);
+    public static final byte[] SECTOR_SHIFT_VERSION_3 = Utils.toBytesLE(0x0009, 2);
     public static final int SECTOR_SHIFT_VERSION_3_INT = (int)Math.pow(2, Utils.toInt(SECTOR_SHIFT_VERSION_3));
-    public static final byte[] MINI_SECTOR_SHIFT_VERSION_3 = Utils.toBytes(0x0006, 2);
-    public static final byte[] MINI_STREAM_CUTOFF_SIZE = Utils.toBytes(0x00001000, 4);
+    public static final byte[] MINI_SECTOR_SHIFT_VERSION_3 = Utils.toBytesLE(0x0006, 2);
+    public static final byte[] MINI_STREAM_CUTOFF_SIZE = Utils.toBytesLE(0x00001000, 4);
     public static final int HEADER_LENGTH = 512;
     public static final int DIFAT_ENTRIES_LIMIT_IN_HEADER = 109;
     private final DataView dataView;
@@ -108,27 +107,27 @@ public class Header {
     }
 
     public void setNumberOfFatSectors(int i) {
-        dataView.subView(NUMBER_OF_FAT_SECTORS, NUMBER_OF_FAT_SECTORS + 4).writeAt(0, Utils.toBytes(i, 4));
+        dataView.subView(NUMBER_OF_FAT_SECTORS, NUMBER_OF_FAT_SECTORS + 4).writeAt(0, Utils.toBytesLE(i, 4));
     }
 
     public void setFirstDirectorySectorLocation(int i) {
-        dataView.subView(FIRST_DIRECTORY_SECTOR, FIRST_DIRECTORY_SECTOR + 4).writeAt(0, Utils.toBytes(i, 4));
+        dataView.subView(FIRST_DIRECTORY_SECTOR, FIRST_DIRECTORY_SECTOR + 4).writeAt(0, Utils.toBytesLE(i, 4));
     }
 
     public void setFirstMinifatSectorLocation(int i) {
-        dataView.subView(FIRST_MINIFAT_SECTOR, FIRST_MINIFAT_SECTOR + 4).writeAt(0, Utils.toBytes(i, 4));
+        dataView.subView(FIRST_MINIFAT_SECTOR, FIRST_MINIFAT_SECTOR + 4).writeAt(0, Utils.toBytesLE(i, 4));
     }
 
     public void setNumberOfMiniFatSectors(int i) {
-        dataView.subView(NUMBER_OF_MINIFAT_SECTORS, NUMBER_OF_MINIFAT_SECTORS + 4).writeAt(0, Utils.toBytes(i, 4));
+        dataView.subView(NUMBER_OF_MINIFAT_SECTORS, NUMBER_OF_MINIFAT_SECTORS + 4).writeAt(0, Utils.toBytesLE(i, 4));
     }
 
     public void setFirstDifatSectorLocation(int i) {
-        dataView.subView(FIRST_DIFAT_SECTOR, FIRST_DIFAT_SECTOR + 4).writeAt(0, Utils.toBytes(i, 4));
+        dataView.subView(FIRST_DIFAT_SECTOR, FIRST_DIFAT_SECTOR + 4).writeAt(0, Utils.toBytesLE(i, 4));
     }
 
     public void setNumberOfDifatSectors(int i) {
-        dataView.subView(NUMBER_OF_DIFAT_SECTORS, NUMBER_OF_DIFAT_SECTORS + 4).writeAt(0, Utils.toBytes(i, 4));
+        dataView.subView(NUMBER_OF_DIFAT_SECTORS, NUMBER_OF_DIFAT_SECTORS + 4).writeAt(0, Utils.toBytesLE(i, 4));
     }
 
     public int getSectorShift() {
@@ -167,7 +166,7 @@ public class Header {
             if(difatEntries.size() >= DIFAT_ENTRIES_LIMIT_IN_HEADER) {
                 throw new IndexOutOfBoundsException("Unable to register additional FAT sector in Header");
             }
-            view.writeAt(difatEntries.size() * 4, Utils.toBytes(sectorPosition, 4));
+            view.writeAt(difatEntries.size() * 4, Utils.toBytesLE(sectorPosition, 4));
             difatEntries.add(sectorPosition);
         }
         public boolean isFull() {

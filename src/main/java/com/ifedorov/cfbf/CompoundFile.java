@@ -104,13 +104,13 @@ public class CompoundFile {
     private void setMiniStreamFirstSectorLocation(int position) {
         sectors.sector(header.getFirstDirectorySectorLocation())
                 .subView(DirectoryEntry.FLAG_POSITION.STARTING_SECTOR_LOCATION, DirectoryEntry.FLAG_POSITION.STARTING_SECTOR_LOCATION + 4)
-                .writeAt(0, position >= 0 ? Utils.toBytes(position, 4) : Utils.ENDOFCHAIN_MARK);
+                .writeAt(0, position >= 0 ? Utils.toBytesLE(position, 4) : Utils.ENDOFCHAIN_MARK);
     }
 
     private void setMiniStreamLength(int size) {
         sectors.sector(header.getFirstDirectorySectorLocation())
                 .subView(DirectoryEntry.FLAG_POSITION.STREAM_SIZE, DirectoryEntry.FLAG_POSITION.STREAM_SIZE + 4)
-                .writeAt(0, Utils.toBytes(size, 4));
+                .writeAt(0, Utils.toBytesLE(size, 4));
     }
 
     public RootStorageDirectoryEntry getRootStorage() {

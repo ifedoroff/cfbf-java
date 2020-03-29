@@ -1,11 +1,8 @@
 package com.ifedorov.cfbf;
 
 import com.google.common.base.VerifyException;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.*;
-import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
@@ -28,7 +25,7 @@ class DIFATSectorTest {
     @Test
     void testGetRegisteredFATSectors() {
         byte[] data = new byte[Header.SECTOR_SHIFT_VERSION_3_INT];
-        IntStream.range(0, 128).boxed().forEach((val) -> System.arraycopy(Utils.toBytes(val, 4), 0, data, val*4, 4));
+        IntStream.range(0, 128).boxed().forEach((val) -> System.arraycopy(Utils.toBytesLE(val, 4), 0, data, val*4, 4));
         DIFATSector sector = new DIFATSector(Sector.from(DataView.from(data), 0));
         assertEquals(127, sector.getRegisteredFatSectors().size());
     }
@@ -36,7 +33,7 @@ class DIFATSectorTest {
     @Test
     void testRegisterDIFATSector(DIFATSector sector) {
         sector.registerNextDifatSector(1);
-        Arrays.equals(Utils.toBytes(1, 4), sector.subView(508).getData());
+        Arrays.equals(Utils.toBytesLE(1, 4), sector.subView(508).getData());
     }
 
     public static class DIFATSectorDataResolver implements ParameterResolver {

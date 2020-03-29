@@ -41,11 +41,11 @@ public class DIFATSector implements Sector {
 
     public void registerFatSector(int sectorPosition) {
         Verify.verify(fatSectors.size() < 127);
-        writeAt(fatSectors.size() * 4, Utils.toBytes(sectorPosition, 4));
+        writeAt(fatSectors.size() * 4, Utils.toBytesLE(sectorPosition, 4));
     }
 
     public void registerNextDifatSector(int sectorPosition) {
-        writeAt(508, Utils.toBytes(sectorPosition, 4));
+        writeAt(508, Utils.toBytesLE(sectorPosition, 4));
     }
 
     public List<Integer> getRegisteredFatSectors() {

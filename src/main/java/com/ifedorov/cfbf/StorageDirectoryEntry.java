@@ -3,15 +3,12 @@ package com.ifedorov.cfbf;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.ifedorov.cfbf.stream.StreamRW;
 import com.ifedorov.cfbf.tree.Node;
 import com.ifedorov.cfbf.tree.NodeFactory;
 import com.ifedorov.cfbf.tree.RedBlackTree;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -55,7 +52,7 @@ public class StorageDirectoryEntry extends DirectoryEntry {
     }
 
     private void setChild(DirectoryEntry entry) {
-        view.subView(FLAG_POSITION.CHILD, FLAG_POSITION.CHILD + 4).writeAt(0, Utils.toBytes(entry.getId(), 4));
+        view.subView(FLAG_POSITION.CHILD, FLAG_POSITION.CHILD + 4).writeAt(0, Utils.toBytesLE(entry.getId(), 4));
     }
 
     private <T extends DirectoryEntry> T addChild(DirectoryEntry entry) {

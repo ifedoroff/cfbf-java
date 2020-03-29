@@ -47,7 +47,7 @@ public class StreamDirectoryEntry extends DirectoryEntry {
     }
 
     private void setStreamSize(int length) {
-        view.subView(FLAG_POSITION.STREAM_SIZE, FLAG_POSITION.STREAM_SIZE + 4).writeAt(0, Utils.toBytes(length, 4));
+        view.subView(FLAG_POSITION.STREAM_SIZE, FLAG_POSITION.STREAM_SIZE + 4).writeAt(0, Utils.toBytesLE(length, 4));
     }
 
     public int getStreamSize() {

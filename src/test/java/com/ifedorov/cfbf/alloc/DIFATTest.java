@@ -1,6 +1,5 @@
 package com.ifedorov.cfbf.alloc;
 
-import com.google.common.collect.Lists;
 import com.ifedorov.cfbf.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,10 +35,10 @@ class DIFATTest {
         when(header.getFirstDifatSectorLocation()).thenReturn(0);
         Sectors sectors = new Sectors(DataView.empty(), header);
         Sector firstSector = sectors.allocateDIFAT();
-        IntStream.range(0, 127).forEach(val -> firstSector.subView(val * 4, (val + 1) * 4).writeAt(0, Utils.toBytes(val, 4)));
-        firstSector.subView(508).writeAt(0, Utils.toBytes(1, 4));
+        IntStream.range(0, 127).forEach(val -> firstSector.subView(val * 4, (val + 1) * 4).writeAt(0, Utils.toBytesLE(val, 4)));
+        firstSector.subView(508).writeAt(0, Utils.toBytesLE(1, 4));
         Sector secondSector = sectors.allocateDIFAT();
-        secondSector.subView(0, 4).writeAt(0, Utils.toBytes(0, 4));
+        secondSector.subView(0, 4).writeAt(0, Utils.toBytesLE(0, 4));
         secondSector.subView(508).writeAt(0, Utils.ENDOFCHAIN_MARK);
         assertEquals(237, new DIFAT(sectors, header, faTtoDIFATFacade).getFatSectorChain().size());
     }
@@ -104,7 +103,7 @@ class DIFATTest {
         when(header.getFirstDifatSectorLocation()).thenReturn(0);
         Sectors sectors = new Sectors(DataView.empty(), header);
         DIFATSector firstSector = sectors.allocateDIFAT();
-        IntStream.range(0, 126).boxed().forEach((val) -> firstSector.subView(val * 4, (val + 1) * 4).writeAt(0, Utils.toBytes(val, 4)));
+        IntStream.range(0, 126).boxed().forEach((val) -> firstSector.subView(val * 4, (val + 1) * 4).writeAt(0, Utils.toBytesLE(val, 4)));
 
         DIFAT difat = new DIFAT(sectors, header, faTtoDIFATFacade);
         difat.registerFATSector(126);

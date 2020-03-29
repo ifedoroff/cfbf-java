@@ -11,7 +11,6 @@ import java.util.List;
 
 import static com.ifedorov.cfbf.Header.*;
 import static com.ifedorov.cfbf.Header.FLAG_POSITION.DIFAT_ENTRIES_FIRST_POSITION;
-import static com.ifedorov.cfbf.Header.FLAG_POSITION.NUMBER_OF_MINIFAT_SECTORS;
 import static org.junit.jupiter.api.Assertions.*;
 
 class HeaderTest {
@@ -57,54 +56,54 @@ class HeaderTest {
 
     @Test
     void testSupportsOnlyMajorVersion3() {
-        System.arraycopy(Utils.toBytes(0x0004, 2), 0, data, FLAG_POSITION.MAJOR_VERSION, 2);
+        System.arraycopy(Utils.toBytesLE(0x0004, 2), 0, data, FLAG_POSITION.MAJOR_VERSION, 2);
         assertThrows(VerifyException.class, () -> new Header(DataView.from(data)));
     }
 
     @Test
     void testSupportsOnlyLittleEndianByteOrder() {
-        System.arraycopy(Utils.toBytes(0xfffd, 2), 0, data, FLAG_POSITION.BYTE_ORDER, 2);
+        System.arraycopy(Utils.toBytesLE(0xfffd, 2), 0, data, FLAG_POSITION.BYTE_ORDER, 2);
         assertThrows(VerifyException.class, () -> new Header(DataView.from(data)));
     }
 
     @Test
     void testSupportsOnly512BytesSectorShift() {
-        System.arraycopy(Utils.toBytes(0x0090, 2), 0, data, FLAG_POSITION.SECTOR_SHIFT, 2);
+        System.arraycopy(Utils.toBytesLE(0x0090, 2), 0, data, FLAG_POSITION.SECTOR_SHIFT, 2);
         assertThrows(VerifyException.class, () -> new Header(DataView.from(data)));
     }
 
     @Test
     void testSupportsOnly64BytesMiniSectorShift() {
-        System.arraycopy(Utils.toBytes(0x0007, 2), 0, data, FLAG_POSITION.MINI_SECTOR_SHIFT, 2);
+        System.arraycopy(Utils.toBytesLE(0x0007, 2), 0, data, FLAG_POSITION.MINI_SECTOR_SHIFT, 2);
         assertThrows(VerifyException.class, () -> new Header(DataView.from(data)));
     }
 
     @Test
     void testEnforcesReservedBytes() {
-        System.arraycopy(Utils.toBytes(0xddddddddddddl, 6), 0, data, 34, 6);
+        System.arraycopy(Utils.toBytesLE(0xddddddddddddl, 6), 0, data, 34, 6);
         assertThrows(VerifyException.class, () -> new Header(DataView.from(data)));
     }
 
     @Test
     void testEnforcesDirectoryServicesNumber() {
-        System.arraycopy(Utils.toBytes(0x11111111, 4), 0, data, 40, 4);
+        System.arraycopy(Utils.toBytesLE(0x11111111, 4), 0, data, 40, 4);
         assertThrows(VerifyException.class, () -> new Header(DataView.from(data)));
     }
 
     @Test
     void testSupportsOnly4096BytesMiniStreamCutoffSize() {
-        System.arraycopy(Utils.toBytes(0x00002000, 4), 0, data, FLAG_POSITION.MINI_STREAM_CUTOFF_SIZE_POSITION, 4);
+        System.arraycopy(Utils.toBytesLE(0x00002000, 4), 0, data, FLAG_POSITION.MINI_STREAM_CUTOFF_SIZE_POSITION, 4);
         assertThrows(VerifyException.class, () -> new Header(DataView.from(data)));
     }
 
     @Test
     void testSectorsUtilityInformation() {
-        System.arraycopy(Utils.toBytes(0x00000001, 4), 0, data, FLAG_POSITION.NUMBER_OF_FAT_SECTORS, 4);
-        System.arraycopy(Utils.toBytes(0x00000002, 4), 0, data, FLAG_POSITION.FIRST_DIRECTORY_SECTOR, 4);
-        System.arraycopy(Utils.toBytes(0x00000003, 4), 0, data, FLAG_POSITION.FIRST_MINIFAT_SECTOR, 4);
-        System.arraycopy(Utils.toBytes(0x00000004, 4), 0, data, FLAG_POSITION.NUMBER_OF_MINIFAT_SECTORS, 4);
-        System.arraycopy(Utils.toBytes(0x00000005, 4), 0, data, FLAG_POSITION.FIRST_DIFAT_SECTOR, 4);
-        System.arraycopy(Utils.toBytes(0x00000006, 4), 0, data, FLAG_POSITION.NUMBER_OF_DIFAT_SECTORS, 4);
+        System.arraycopy(Utils.toBytesLE(0x00000001, 4), 0, data, FLAG_POSITION.NUMBER_OF_FAT_SECTORS, 4);
+        System.arraycopy(Utils.toBytesLE(0x00000002, 4), 0, data, FLAG_POSITION.FIRST_DIRECTORY_SECTOR, 4);
+        System.arraycopy(Utils.toBytesLE(0x00000003, 4), 0, data, FLAG_POSITION.FIRST_MINIFAT_SECTOR, 4);
+        System.arraycopy(Utils.toBytesLE(0x00000004, 4), 0, data, FLAG_POSITION.NUMBER_OF_MINIFAT_SECTORS, 4);
+        System.arraycopy(Utils.toBytesLE(0x00000005, 4), 0, data, FLAG_POSITION.FIRST_DIFAT_SECTOR, 4);
+        System.arraycopy(Utils.toBytesLE(0x00000006, 4), 0, data, FLAG_POSITION.NUMBER_OF_DIFAT_SECTORS, 4);
         Header header = new Header(new DataView.SimpleDataView(data));
         assertEquals(1, header.getNumberOfFatSectors());
         assertEquals(2, header.getFirstDirectorySectorLocation());
@@ -133,9 +132,9 @@ class HeaderTest {
 
     @Test
     void testGetHeaderDifatEntries() {
-        System.arraycopy(Utils.toBytes(0, 4), 0, data, 76, 4);
-        System.arraycopy(Utils.toBytes(1, 4), 0, data, 80, 4);
-        System.arraycopy(Utils.toBytes(2, 4), 0, data, 84, 4);
+        System.arraycopy(Utils.toBytesLE(0, 4), 0, data, 76, 4);
+        System.arraycopy(Utils.toBytesLE(1, 4), 0, data, 80, 4);
+        System.arraycopy(Utils.toBytesLE(2, 4), 0, data, 84, 4);
         List<Integer> difatEntries = new Header(DataView.from(data).subView(0, HEADER_LENGTH)).getDifatEntries();
         assertTrue(Iterables.elementsEqual(Lists.newArrayList(0,1,2), difatEntries));
     }
@@ -152,7 +151,7 @@ class HeaderTest {
     @Test
     void testRegisterFatSectorOutOfRange() {
         for (int i = DIFAT_ENTRIES_FIRST_POSITION; i < HEADER_LENGTH; i+=4) {
-            System.arraycopy(Utils.toBytes(i, 4), 0, data, i, 4);
+            System.arraycopy(Utils.toBytesLE(i, 4), 0, data, i, 4);
         }
         assertThrows(IndexOutOfBoundsException.class, () -> new Header(new DataView.SimpleDataView(data)).registerFatSector(1));
     }
@@ -165,10 +164,10 @@ class HeaderTest {
         assertArrayEquals(HEADER_SIGNATURE, dataView.subView(FLAG_POSITION.SIGNATURE, FLAG_POSITION.SIGNATURE + 8).getData());
         assertArrayEquals(new byte[16], dataView.subView(FLAG_POSITION.CLSID, FLAG_POSITION.CLSID + 16).getData());
         assertArrayEquals(Utils.ENDOFCHAIN_MARK, dataView.subView(FLAG_POSITION.FIRST_DIFAT_SECTOR, FLAG_POSITION.FIRST_DIFAT_SECTOR + 4).getData());
-        assertArrayEquals(Utils.toBytes(0, 4), dataView.subView(FLAG_POSITION.NUMBER_OF_FAT_SECTORS, FLAG_POSITION.NUMBER_OF_FAT_SECTORS + 4).getData());
+        assertArrayEquals(Utils.toBytesLE(0, 4), dataView.subView(FLAG_POSITION.NUMBER_OF_FAT_SECTORS, FLAG_POSITION.NUMBER_OF_FAT_SECTORS + 4).getData());
         assertArrayEquals(Utils.ENDOFCHAIN_MARK, dataView.subView(FLAG_POSITION.FIRST_MINIFAT_SECTOR, FLAG_POSITION.FIRST_MINIFAT_SECTOR + 4).getData());
-        assertArrayEquals(Utils.toBytes(0, 4), dataView.subView(FLAG_POSITION.NUMBER_OF_MINIFAT_SECTORS, FLAG_POSITION.NUMBER_OF_MINIFAT_SECTORS + 4).getData());
-        assertArrayEquals(Utils.toBytes(0, 4), dataView.subView(FLAG_POSITION.NUMBER_OF_DIFAT_SECTORS, FLAG_POSITION.NUMBER_OF_DIFAT_SECTORS + 4).getData());
+        assertArrayEquals(Utils.toBytesLE(0, 4), dataView.subView(FLAG_POSITION.NUMBER_OF_MINIFAT_SECTORS, FLAG_POSITION.NUMBER_OF_MINIFAT_SECTORS + 4).getData());
+        assertArrayEquals(Utils.toBytesLE(0, 4), dataView.subView(FLAG_POSITION.NUMBER_OF_DIFAT_SECTORS, FLAG_POSITION.NUMBER_OF_DIFAT_SECTORS + 4).getData());
         assertArrayEquals(Utils.ENDOFCHAIN_MARK, dataView.subView(FLAG_POSITION.FIRST_DIRECTORY_SECTOR, FLAG_POSITION.FIRST_DIRECTORY_SECTOR + 4).getData());
     }
 }

@@ -44,7 +44,7 @@ public class AllocationTable {
     public void registerSector(Integer sectorPosition, Integer previousSectorPosition) {
         getFatSectorPointingToAllocatedSector(sectorPosition).writeAt(calculatePositionInsideFatSector(sectorPosition), Utils.ENDOFCHAIN_MARK);
         if(previousSectorPosition != null) {
-            getFatSectorPointingToAllocatedSector(previousSectorPosition).writeAt(calculatePositionInsideFatSector(previousSectorPosition), Utils.toBytes(sectorPosition, 4));
+            getFatSectorPointingToAllocatedSector(previousSectorPosition).writeAt(calculatePositionInsideFatSector(previousSectorPosition), Utils.toBytesLE(sectorPosition, 4));
         }
     }
 

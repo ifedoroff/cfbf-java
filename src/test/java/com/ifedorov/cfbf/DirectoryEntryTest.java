@@ -1,10 +1,8 @@
 package com.ifedorov.cfbf;
 
-import com.google.common.base.Joiner;
 import com.google.common.base.VerifyException;
 import com.ifedorov.cfbf.alloc.FAT;
 import com.ifedorov.cfbf.alloc.FATtoDIFATFacade;
-import com.ifedorov.cfbf.stream.MiniStreamRW;
 import com.ifedorov.cfbf.stream.RegularStreamRW;
 import com.ifedorov.cfbf.stream.StreamHolder;
 import com.ifedorov.cfbf.stream.StreamRW;
@@ -13,8 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -67,23 +63,23 @@ class DirectoryEntryTest {
 
     @Test
     void testDirectoryEntryShouldHaveValidObjectType() {
-        System.arraycopy(Utils.toBytes(DirectoryEntry.ObjectType.Storage.code(), 1), 0, data, DirectoryEntry.FLAG_POSITION.OBJECT_TYPE, 1);
+        System.arraycopy(Utils.toBytesLE(DirectoryEntry.ObjectType.Storage.code(), 1), 0, data, DirectoryEntry.FLAG_POSITION.OBJECT_TYPE, 1);
         new DirectoryEntry(0, directoryEntryChain, new DataView.SimpleDataView(data));
-        System.arraycopy(Utils.toBytes(DirectoryEntry.ObjectType.RootStorage.code(), 1), 0, data, DirectoryEntry.FLAG_POSITION.OBJECT_TYPE, 1);
+        System.arraycopy(Utils.toBytesLE(DirectoryEntry.ObjectType.RootStorage.code(), 1), 0, data, DirectoryEntry.FLAG_POSITION.OBJECT_TYPE, 1);
         new DirectoryEntry(1, directoryEntryChain, new DataView.SimpleDataView(data));
-        System.arraycopy(Utils.toBytes(DirectoryEntry.ObjectType.Stream.code(), 1), 0, data, DirectoryEntry.FLAG_POSITION.OBJECT_TYPE, 1);
+        System.arraycopy(Utils.toBytesLE(DirectoryEntry.ObjectType.Stream.code(), 1), 0, data, DirectoryEntry.FLAG_POSITION.OBJECT_TYPE, 1);
         new DirectoryEntry(2, directoryEntryChain, new DataView.SimpleDataView(data));
-        System.arraycopy(Utils.toBytes(DirectoryEntry.ObjectType.Unknown.code(), 1), 0, data, DirectoryEntry.FLAG_POSITION.OBJECT_TYPE, 1);
+        System.arraycopy(Utils.toBytesLE(DirectoryEntry.ObjectType.Unknown.code(), 1), 0, data, DirectoryEntry.FLAG_POSITION.OBJECT_TYPE, 1);
         new DirectoryEntry(3, directoryEntryChain, new DataView.SimpleDataView(data));
-        System.arraycopy(Utils.toBytes(-1, 1), 0, data, DirectoryEntry.FLAG_POSITION.OBJECT_TYPE, 1);
+        System.arraycopy(Utils.toBytesLE(-1, 1), 0, data, DirectoryEntry.FLAG_POSITION.OBJECT_TYPE, 1);
         assertThrows(IllegalArgumentException.class, ()->new DirectoryEntry(4, directoryEntryChain, new DataView.SimpleDataView(data)));
     }
 
     @Test
     void testDirectoryEntryNameLength() {
-        System.arraycopy(Utils.toBytes(65, 2), 0, data, DirectoryEntry.FLAG_POSITION.DIRECTORY_ENTRY_NAME_LENGTH, 2);
+        System.arraycopy(Utils.toBytesLE(65, 2), 0, data, DirectoryEntry.FLAG_POSITION.DIRECTORY_ENTRY_NAME_LENGTH, 2);
         assertThrows(VerifyException.class, () -> new DirectoryEntry(0, directoryEntryChain, new DataView.SimpleDataView(data)));
-        System.arraycopy(Utils.toBytes(15, 2), 0, data, DirectoryEntry.FLAG_POSITION.DIRECTORY_ENTRY_NAME_LENGTH, 2);
+        System.arraycopy(Utils.toBytesLE(15, 2), 0, data, DirectoryEntry.FLAG_POSITION.DIRECTORY_ENTRY_NAME_LENGTH, 2);
         assertEquals(15, new DirectoryEntry(1, directoryEntryChain, new DataView.SimpleDataView(data)).getDirectoryEntryNameLength());
     }
 
@@ -95,9 +91,9 @@ class DirectoryEntryTest {
         when(directoryEntryChain.getEntryById(1)).thenReturn(child);
         when(directoryEntryChain.getEntryById(2)).thenReturn(leftSibling);
         when(directoryEntryChain.getEntryById(3)).thenReturn(rightSibling);
-        System.arraycopy(Utils.toBytes(1, 4), 0, data, DirectoryEntry.FLAG_POSITION.CHILD, 4);
-        System.arraycopy(Utils.toBytes(2, 4), 0, data, DirectoryEntry.FLAG_POSITION.LEFT_SIBLING, 4);
-        System.arraycopy(Utils.toBytes(3, 4), 0, data, DirectoryEntry.FLAG_POSITION.RIGHT_SIBLING, 4);
+        System.arraycopy(Utils.toBytesLE(1, 4), 0, data, DirectoryEntry.FLAG_POSITION.CHILD, 4);
+        System.arraycopy(Utils.toBytesLE(2, 4), 0, data, DirectoryEntry.FLAG_POSITION.LEFT_SIBLING, 4);
+        System.arraycopy(Utils.toBytesLE(3, 4), 0, data, DirectoryEntry.FLAG_POSITION.RIGHT_SIBLING, 4);
         DirectoryEntry directoryEntry = new DirectoryEntry(0, directoryEntryChain, new DataView.SimpleDataView(data));
         assertEquals(child, directoryEntry.getChild().orElseThrow(() -> new RuntimeException("child has to be presented")));
         assertEquals(leftSibling, directoryEntry.getLeftSibling().orElseThrow(() -> new RuntimeException("child has to be presented")));

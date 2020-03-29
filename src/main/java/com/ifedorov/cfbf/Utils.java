@@ -7,26 +7,20 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
-import java.util.Spliterator;
-import java.util.Spliterators;
 import java.util.UUID;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 public class Utils {
-    public static final byte[] DISECT_MARK = Utils.toBytes(0xfffffffc,4 );
-    public static final int DISECT_MARK_INT = Utils.toInt(Utils.toBytes(0xfffffffc,4 ));
-    public static final byte[] FATSECT_MARK = Utils.toBytes(0xfffffffd, 4);
-    public static final int FATSECT_MARK_INT = Utils.toInt(Utils.toBytes(0xfffffffd, 4));
-    public static final byte[] ENDOFCHAIN_MARK = Utils.toBytes(0xfffffffe, 4);
-    public static final int ENDOFCHAIN_MARK_INT = Utils.toInt(Utils.toBytes(0xfffffffe, 4));
-    public static final byte[] FREESECT_MARK_OR_NOSTREAM = Utils.toBytes(0xffffffff, 4);
-    public static final int FREESECT_MARK_OR_NOSTREAM_INT = Utils.toInt(Utils.toBytes(0xffffffff, 4));
-    public static final byte[] MAX_POSSIBLE_POSITION = Utils.toBytes(0xfffffffa, 4);
+    public static final byte[] DISECT_MARK = Utils.toBytesLE(0xfffffffc,4 );
+    public static final int DISECT_MARK_INT = Utils.toInt(Utils.toBytesLE(0xfffffffc,4 ));
+    public static final byte[] FATSECT_MARK = Utils.toBytesLE(0xfffffffd, 4);
+    public static final int FATSECT_MARK_INT = Utils.toInt(Utils.toBytesLE(0xfffffffd, 4));
+    public static final byte[] ENDOFCHAIN_MARK = Utils.toBytesLE(0xfffffffe, 4);
+    public static final int ENDOFCHAIN_MARK_INT = Utils.toInt(Utils.toBytesLE(0xfffffffe, 4));
+    public static final byte[] FREESECT_MARK_OR_NOSTREAM = Utils.toBytesLE(0xffffffff, 4);
+    public static final int FREESECT_MARK_OR_NOSTREAM_INT = Utils.toInt(Utils.toBytesLE(0xffffffff, 4));
+    public static final byte[] MAX_POSSIBLE_POSITION = Utils.toBytesLE(0xfffffffa, 4);
 
-    public static byte[] toBytes(long l, int length) {
+    public static byte[] toBytesLE(long l, int length) {
         byte[] result = new byte[length];
         for (int i = 0; i < length; i++) {
             result[i] = (byte)(l & 0xFF);
@@ -35,7 +29,16 @@ public class Utils {
         return result;
     }
 
-    public static long toLong(byte[] b) {
+    public static byte[] toBytesBE(long l, int length) {
+        byte[] result = new byte[length];
+        for (int i = length - 1; i >= 0; i--) {
+            result[i] = (byte)(l & 0xFF);
+            l >>= 8;
+        }
+        return result;
+    }
+
+    public static long toLongLE(byte[] b) {
         long result = 0;
         for (int i = b.length - 1; i >= 0; i--) {
             result <<= 8;
@@ -53,7 +56,7 @@ public class Utils {
         return result;
     }
 
-    public static UUID uuidLE(byte[] sourceBytes) {
+    public static UUID uuidFromByteLE(byte[] sourceBytes) {
         byte[] mostSignificant = new byte[8];
         mostSignificant[0] = sourceBytes[3];
         mostSignificant[1] = sourceBytes[2];
@@ -66,6 +69,18 @@ public class Utils {
         byte[] leastSignificant = new byte[8];
         System.arraycopy(sourceBytes, 8, leastSignificant, 0, 8);
         return new UUID(Utils.toLongBE(mostSignificant), Utils.toLongBE(leastSignificant));
+    }
+
+    public static byte[] uuidToBytesLE(UUID uuid) {
+        long mostSignificantBits = uuid.getMostSignificantBits();
+        long leastSignificantBits = uuid.getLeastSignificantBits();
+        byte[] mostSignificant = toBytesBE(mostSignificantBits, 8);
+        byte[] leastSignificant = toBytesBE(leastSignificantBits, 8);
+        ArrayUtils.swap(mostSignificant, 0, 3);
+        ArrayUtils.swap(mostSignificant, 1, 2);
+        ArrayUtils.swap(mostSignificant, 4, 5);
+        ArrayUtils.swap(mostSignificant, 6, 7);
+        return ArrayUtils.addAll(mostSignificant, leastSignificant);
     }
 
     public static int toInt(byte[] bytes) {

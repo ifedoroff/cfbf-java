@@ -2,13 +2,10 @@ package com.ifedorov.cfbf;
 
 import com.google.common.base.Strings;
 import com.google.common.base.Verify;
-import com.ifedorov.cfbf.stream.StreamRW;
-import com.ifedorov.cfbf.stream.StreamReader;
 import com.ifedorov.cfbf.tree.Node;
 
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 public class DirectoryEntry implements Comparable<DirectoryEntry>{
 
@@ -60,7 +57,7 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
         setDirectoryEntryName(name);
         setLeftSibling(null);
         setRightSibling(null);
-        view.subView(FLAG_POSITION.STREAM_SIZE, FLAG_POSITION.STREAM_SIZE + 8).writeAt(0, Utils.toBytes(0, 8));
+        view.subView(FLAG_POSITION.STREAM_SIZE, FLAG_POSITION.STREAM_SIZE + 8).writeAt(0, Utils.toBytesLE(0, 8));
         setStreamStartingSector(Utils.ENDOFCHAIN_MARK_INT);
     }
 
@@ -77,7 +74,7 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
         if(rightSibling == null) {
             view.subView(FLAG_POSITION.RIGHT_SIBLING, FLAG_POSITION.RIGHT_SIBLING + 4).writeAt(0, Utils.FREESECT_MARK_OR_NOSTREAM);
         } else {
-            view.subView(FLAG_POSITION.RIGHT_SIBLING, FLAG_POSITION.RIGHT_SIBLING + 4).writeAt(0, Utils.toBytes(rightSibling.getId(), 4));
+            view.subView(FLAG_POSITION.RIGHT_SIBLING, FLAG_POSITION.RIGHT_SIBLING + 4).writeAt(0, Utils.toBytesLE(rightSibling.getId(), 4));
         }
     }
 
@@ -85,7 +82,7 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
         if(leftSibling == null) {
             view.subView(FLAG_POSITION.LEFT_SIBLING, FLAG_POSITION.LEFT_SIBLING + 4).writeAt(0, Utils.FREESECT_MARK_OR_NOSTREAM);
         } else {
-            view.subView(FLAG_POSITION.LEFT_SIBLING, FLAG_POSITION.LEFT_SIBLING + 4).writeAt(0, Utils.toBytes(leftSibling.getId(), 4));
+            view.subView(FLAG_POSITION.LEFT_SIBLING, FLAG_POSITION.LEFT_SIBLING + 4).writeAt(0, Utils.toBytesLE(leftSibling.getId(), 4));
         }
     }
 
@@ -98,7 +95,7 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
         }
         view.subView(FLAG_POSITION.DIRECTORY_ENTRY_NAME, FLAG_POSITION.DIRECTORY_ENTRY_NAME + ENTRY_NAME_MAXIMUM_LENGTH).writeAt(0, Utils.addTrailingZeros(Utils.toUTF16Bytes(name), ENTRY_NAME_MAXIMUM_LENGTH));
         int lengthInBytesIncludingTerminatorSymbol = name.length();
-        view.subView(FLAG_POSITION.DIRECTORY_ENTRY_NAME_LENGTH, FLAG_POSITION.DIRECTORY_ENTRY_NAME_LENGTH + 2).writeAt(0, Utils.toBytes(lengthInBytesIncludingTerminatorSymbol * 2 + 2, 2));
+        view.subView(FLAG_POSITION.DIRECTORY_ENTRY_NAME_LENGTH, FLAG_POSITION.DIRECTORY_ENTRY_NAME_LENGTH + 2).writeAt(0, Utils.toBytesLE(lengthInBytesIncludingTerminatorSymbol * 2 + 2, 2));
     }
 
     public int getId() {
@@ -154,7 +151,7 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
     }
 
     public void setStreamStartingSector(int startingSector) {
-        view.subView(FLAG_POSITION.STARTING_SECTOR_LOCATION, FLAG_POSITION.STARTING_SECTOR_LOCATION + 4).writeAt(0, Utils.toBytes(startingSector, 4));
+        view.subView(FLAG_POSITION.STARTING_SECTOR_LOCATION, FLAG_POSITION.STARTING_SECTOR_LOCATION + 4).writeAt(0, Utils.toBytesLE(startingSector, 4));
     }
 
     public void traverse(Consumer<DirectoryEntry> action) {
