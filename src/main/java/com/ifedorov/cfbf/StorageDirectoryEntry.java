@@ -7,11 +7,14 @@ import com.ifedorov.cfbf.tree.Node;
 import com.ifedorov.cfbf.tree.NodeFactory;
 import com.ifedorov.cfbf.tree.RedBlackTree;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.stream.BaseStream;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class StorageDirectoryEntry extends DirectoryEntry {
 
@@ -82,6 +85,22 @@ public class StorageDirectoryEntry extends DirectoryEntry {
             }
         }, Predicates.alwaysFalse());
         return children;
+    }
+
+    public Stream<DirectoryEntry> children() {
+        List<DirectoryEntry> children = Lists.newArrayList();
+        eachChild(directoryEntry -> {
+            children.add(directoryEntry);
+        });
+        return children.stream();
+    }
+
+    public Stream<DirectoryEntry> storages() {
+        return children().filter(directoryEntry -> directoryEntry instanceof StorageDirectoryEntry);
+    }
+
+    public Stream<DirectoryEntry> streams() {
+        return children().filter(directoryEntry -> directoryEntry instanceof StreamDirectoryEntry);
     }
 
     public void eachChild(Consumer<DirectoryEntry> consumer) {

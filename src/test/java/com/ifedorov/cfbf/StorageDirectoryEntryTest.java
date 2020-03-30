@@ -78,4 +78,18 @@ class StorageDirectoryEntryTest {
         assertEquals(2, rootStorage.findChildren((directoryEntry -> directoryEntry instanceof StorageDirectoryEntry)).size());
         assertEquals(1, rootStorage.findChildren((directoryEntry -> directoryEntry instanceof StreamDirectoryEntry)).size());
     }
+
+    @Test
+    void testChildren() {
+        CompoundFile compoundFile = new CompoundFile();
+        RootStorageDirectoryEntry rootStorage = compoundFile.getRootStorage();
+        rootStorage.addStorage("storage1");
+        rootStorage.addStorage("storage2");
+        rootStorage.addStream("stream1", new byte[]{1,2,3,4,5});
+        rootStorage.addStream("stream2", new byte[]{1,2,3,4,5});
+        rootStorage.addStream("stream3", new byte[]{1,2,3,4,5});
+        assertEquals(5, rootStorage.children().count());
+        assertEquals(2, rootStorage.storages().count());
+        assertEquals(3, rootStorage.streams().count());
+    }
 }
