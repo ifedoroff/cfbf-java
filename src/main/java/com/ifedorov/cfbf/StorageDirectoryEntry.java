@@ -95,12 +95,12 @@ public class StorageDirectoryEntry extends DirectoryEntry {
         return children.stream();
     }
 
-    public Stream<DirectoryEntry> storages() {
-        return children().filter(directoryEntry -> directoryEntry instanceof StorageDirectoryEntry);
+    public Stream<StorageDirectoryEntry> storages() {
+        return children().filter(directoryEntry -> directoryEntry instanceof StorageDirectoryEntry).map(StorageDirectoryEntry.class::cast);
     }
 
-    public Stream<DirectoryEntry> streams() {
-        return children().filter(directoryEntry -> directoryEntry instanceof StreamDirectoryEntry);
+    public Stream<StreamDirectoryEntry> streams() {
+        return children().filter(directoryEntry -> directoryEntry instanceof StreamDirectoryEntry).map(StreamDirectoryEntry.class::cast);
     }
 
     public void eachChild(Consumer<DirectoryEntry> consumer) {
