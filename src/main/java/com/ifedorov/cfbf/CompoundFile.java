@@ -126,6 +126,14 @@ public class CompoundFile {
         }
     }
 
+    public void saveTo(OutputStream outputStream) {
+        try {
+            outputStream.write(dataView.getData());
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to save msg to file: ",e );
+        }
+    }
+
     public CompoundFile copy() {
         CompoundFile copy = new CompoundFile();
         RootStorageDirectoryEntry rootStorage = getRootStorage();
