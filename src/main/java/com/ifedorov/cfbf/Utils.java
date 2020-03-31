@@ -85,7 +85,7 @@ public class Utils {
 
     public static int toInt(byte[] bytes) {
         if(bytes.length == 2) {
-            return (((bytes[1]<< 8 & 0xFF)) | (bytes[0] & 0xFF));
+            return (((bytes[1] & 0xFF) << 8) | (bytes[0] & 0xFF));
         } else if(bytes.length == 4) {
             return ((bytes[0] & 0xFF) << 0) |
                     ((bytes[1] & 0xFF) << 8) |
