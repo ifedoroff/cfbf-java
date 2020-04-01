@@ -8,6 +8,7 @@ import com.ifedorov.cfbf.alloc.FAT;
 import com.ifedorov.cfbf.Sector;
 import org.apache.commons.lang3.ArrayUtils;
 
+import java.io.OutputStream;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -104,6 +105,12 @@ public class RegularStreamRW implements StreamRW {
             previousSectorPosition = sectorPosition;
         }
         return startingSector;
+    }
+
+    @Override
+    public void copyTo(int startingSector, OutputStream os) {
+        new DataView.VariableSizeChunkedDataView(fat.buildChain(startingSector).stream().map(sectors::sector).collect(Collectors.toList()))
+                .copyTo(os);
     }
 
     private int howManyChunksNeeded(int dataLength) {

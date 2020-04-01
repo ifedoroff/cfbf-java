@@ -8,6 +8,7 @@ import com.ifedorov.cfbf.alloc.FAT;
 import com.ifedorov.cfbf.alloc.MiniFAT;
 import org.apache.commons.lang3.ArrayUtils;
 
+import java.io.OutputStream;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -141,6 +142,12 @@ public class MiniStreamRW implements StreamRW {
             miniStreamLength += header.getMiniSectorShift();
         }
         return startingSector;
+    }
+
+    @Override
+    public void copyTo(int startingLocation, OutputStream os) {
+        new DataView.VariableSizeChunkedDataView(miniFAT.buildChain(startingLocation).stream().map(this::getMiniSectorData).collect(Collectors.toList()))
+                .copyTo(os);
     }
 
     private DataView getDataHolderForNextChunk() {

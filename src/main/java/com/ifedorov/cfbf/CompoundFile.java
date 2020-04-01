@@ -69,6 +69,11 @@ public class CompoundFile {
                 setMiniStreamLength(miniStreamRW.getMiniStreamLength());
                 return firstSectorLocation;
             }
+
+            @Override
+            public void copyTo(int startingLocation, OutputStream os) {
+                miniStreamRW.copyTo(startingLocation, os);
+            }
         };
         StreamHolder streamReader = new StreamHolder(
                 new RegularStreamRW(fat, sectors, header),

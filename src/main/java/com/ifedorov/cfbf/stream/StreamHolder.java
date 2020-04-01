@@ -3,6 +3,8 @@ package com.ifedorov.cfbf.stream;
 import com.google.common.base.Verify;
 import org.apache.commons.lang3.ArrayUtils;
 
+import java.io.OutputStream;
+
 public class StreamHolder {
 
     private final StreamRW regularStreamRW;
@@ -26,6 +28,10 @@ public class StreamHolder {
 
     public byte[] getStreamData(int startingLocation, int size) {
         return forSize(size).read(startingLocation, size);
+    }
+
+    public void copyTo(int startingLocation, int size, OutputStream os) {
+        forSize(size).copyTo(startingLocation, os);
     }
 
     public int setStreamData(byte[] data) {

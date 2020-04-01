@@ -3,6 +3,8 @@ package com.ifedorov.cfbf;
 import com.google.common.base.Verify;
 import com.ifedorov.cfbf.stream.StreamHolder;
 
+import java.io.OutputStream;
+
 public class StreamDirectoryEntry extends DirectoryEntry {
 
     private final StreamHolder streamHolder;
@@ -23,6 +25,10 @@ public class StreamDirectoryEntry extends DirectoryEntry {
         } else {
             return new byte[0];
         }
+    }
+
+    public void copyTo(OutputStream os) {
+        streamHolder.copyTo(getStreamStartingSector(), getStreamSize(), os);
     }
 
     public void setStreamData(byte[] data) {

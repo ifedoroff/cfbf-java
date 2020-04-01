@@ -3,6 +3,7 @@ package com.ifedorov.cfbf;
 import com.google.common.base.Verify;
 import com.google.common.collect.Lists;
 
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.List;
 
@@ -95,5 +96,10 @@ public class DIFATSector implements Sector {
     @Override
     public byte[] readAt(int position, int length) {
         return delegate.readAt(position, length);
+    }
+
+    @Override
+    public void copyTo(OutputStream os) {
+        delegate.copyTo(os);
     }
 }

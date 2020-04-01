@@ -8,6 +8,7 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.*;
 
 public interface DataView {
@@ -22,9 +23,7 @@ public interface DataView {
         return getSize() == 0;
     };
     byte[] readAt(int position, int length);
-//    default byte[] readAt(int position, int length) {
-//        return ArrayUtils.subarray(getData(), position, position + length);
-//    };
+    void copyTo(OutputStream os);
 
     static DataView empty() {
         return new FixedSizeChunkedDataView(Header.SECTOR_SHIFT_VERSION_3_INT);
@@ -100,8 +99,6 @@ public interface DataView {
         @Override
         public DataView subView(int start) {
             throw new UnsupportedOperationException();
-//            Verify.verify(start % chunkSize == 0, "Cannot create subview that partitions chunk into two");
-//            return new ChunkedDataView(chunkSize, Lists.newArrayList(chunks.subList(start/chunkSize, chunks.size())));
         }
 
         @Override
@@ -120,6 +117,11 @@ public interface DataView {
         @Override
         public byte[] readAt(int position, int length) {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void copyTo(OutputStream os) {
+            chunks.stream().forEach(dataView -> dataView.copyTo(os));
         }
     }
 
@@ -238,6 +240,11 @@ public interface DataView {
         public byte[] readAt(int position, int length) {
             return subView(position, position + length).getData();
         }
+
+        @Override
+        public void copyTo(OutputStream os) {
+            viewMap.forEach((i, dataView) -> dataView.copyTo(os));
+        }
     }
 
     class SimpleDataView implements DataView {
@@ -303,17 +310,6 @@ public interface DataView {
 
         public DataView allocate(int length) {
             throw new UnsupportedOperationException();
-//            if(length != chunkSize) {
-//                throw new IllegalArgumentException("Allocation should be performed in chunks of " + chunkSize + ". Requested allocation is " + length);
-//            }
-//            if(data == null) {
-//                data = new byte[length];
-//            } else {
-//                byte[] newData = new byte[data.length + length];
-//                System.arraycopy(data, 0, newData, 0, data.length);
-//                this.data = newData;
-//            }
-//            return new ReferencingSubView(this, data.length - length, data.length);
         }
 
         @Override
@@ -325,6 +321,15 @@ public interface DataView {
         @Override
         public byte[] readAt(int position, int length) {
             return ArrayUtils.subarray(data, position, position + length);
+        }
+
+        @Override
+        public void copyTo(OutputStream os) {
+            try {
+                os.write(data);
+            } catch (IOException e) {
+                throw new RuntimeException("Unable to write data to Output Stream", e);
+            }
         }
     }
 
@@ -414,6 +419,15 @@ public interface DataView {
                 throw new IllegalArgumentException(String.format("Operation exceeds view limits. (read end position < view end: %s; )", position + length, end));
             }
             return delegate.readAt(start + position, length);
+        }
+
+        @Override
+        public void copyTo(OutputStream os) {
+            try {
+                os.write(getData());
+            } catch (IOException e) {
+                throw new RuntimeException("Unable to write data to Output Stream", e);
+            }
         }
     }
 }

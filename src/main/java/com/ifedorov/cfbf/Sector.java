@@ -1,5 +1,7 @@
 package com.ifedorov.cfbf;
 
+import java.io.OutputStream;
+
 public interface Sector extends DataView{
     int getPosition();
     static Sector from(DataView view, int position) {
@@ -63,6 +65,11 @@ public interface Sector extends DataView{
         @Override
         public byte[] readAt(int position, int length) {
             return view.readAt(position, length);
+        }
+
+        @Override
+        public void copyTo(OutputStream os) {
+            view.copyTo(os);
         }
 
         public static DataView empty() {
