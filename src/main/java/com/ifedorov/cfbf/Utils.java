@@ -7,6 +7,7 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.UUID;
 
 public class Utils {
@@ -19,6 +20,7 @@ public class Utils {
     public static final byte[] FREESECT_MARK_OR_NOSTREAM = Utils.toBytesLE(0xffffffff, 4);
     public static final int FREESECT_MARK_OR_NOSTREAM_INT = Utils.toInt(Utils.toBytesLE(0xffffffff, 4));
     public static final byte[] MAX_POSSIBLE_POSITION = Utils.toBytesLE(0xfffffffa, 4);
+    public static final long DIFF_BETWEEN_EPOCHS_1970_1601 = 11644473599996l;
 
     public static byte[] toBytesLE(long l, int length) {
         byte[] result = new byte[length];
@@ -94,6 +96,25 @@ public class Utils {
         } else {
             throw new IllegalArgumentException("Cannot convert bytes to int: " + Arrays.toString(bytes));
         }
+    }
+
+    public static double toDoubleLE(byte[] bytes) {
+        int exponent = (((bytes[7] & 0b01111111) << 4) | (bytes[6] >> 4)) - 1023;
+        double fraction = 0;
+        for (int i = 1; i <= 52; i++) {
+            int bitPosition = (52 - i) % 8;
+            int bytePosition = bytes[(52 - i) / 8];
+            fraction += (((bytePosition & 0xFF) >> bitPosition) & 0b00000001) * Math.pow(2, - i);
+        }
+        return Math.pow(2, exponent) * (1 + fraction);
+    }
+
+    public static boolean toBoolean(byte bit) {
+        return (bit & 1) == 1;
+    }
+
+    public static Date toTime(byte[] bytes) {
+        return new Date(Utils.toLongLE(bytes) / 10000 - DIFF_BETWEEN_EPOCHS_1970_1601);
     }
 
     public static byte[] initializedWith(int size, byte value) {
