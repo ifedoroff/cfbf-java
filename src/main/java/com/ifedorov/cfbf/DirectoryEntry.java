@@ -44,6 +44,10 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
         Verify.verify(nameLength >= 0 && nameLength <= ENTRY_NAME_MAXIMUM_LENGTH);
         objectType = ObjectType.fromCode(view.subView(FLAG_POSITION.OBJECT_TYPE, FLAG_POSITION.OBJECT_TYPE +1).getData()[0]);
         colorFlag = ColorFlag.fromCode(view.subView(FLAG_POSITION.COLOR_FLAG, FLAG_POSITION.COLOR_FLAG +1).getData()[0]);
+        setStateBits(Utils.initializedWith(4, 0));
+        setCLSID(Utils.initializedWith(16, 0));
+        setModifiedTime(Utils.initializedWith(8, 0));
+        setCreationTime(Utils.initializedWith(8, 0));
     }
 
     protected DirectoryEntry(int id, String name, ColorFlag colorFlag, ObjectType objectType, DirectoryEntryChain directoryEntryChain, DataView view) {
@@ -177,6 +181,39 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
     public void invertColor() {
         this.colorFlag = this.colorFlag == ColorFlag.BLACK ? ColorFlag.RED : ColorFlag.BLACK;
     }
+
+    public void setCLSID(byte[] bytes) {
+        view.subView(FLAG_POSITION.CLSID, FLAG_POSITION.CLSID + 16).writeAt(0, bytes);
+    }
+
+    public void setStateBits(byte[] bytes) {
+        view.subView(FLAG_POSITION.STATE_BITS, FLAG_POSITION.STATE_BITS + 4).writeAt(0, bytes);
+    }
+
+    public void setCreationTime(byte[] bytes) {
+        view.subView(FLAG_POSITION.CREATION_TIME, FLAG_POSITION.CREATION_TIME + 8).writeAt(0, bytes);
+    }
+
+    public void setModifiedTime(byte[] bytes) {
+        view.subView(FLAG_POSITION.MODIFY_TIME, FLAG_POSITION.MODIFY_TIME + 8).writeAt(0, bytes);
+    }
+
+    public byte[] getCLSID() {
+        return view.subView(FLAG_POSITION.CLSID, FLAG_POSITION.CLSID + 16).getData();
+    }
+
+    public byte[] getStateBits() {
+        return view.subView(FLAG_POSITION.STATE_BITS, FLAG_POSITION.STATE_BITS + 4).getData();
+    }
+
+    public byte[] getCreationTime() {
+        return view.subView(FLAG_POSITION.CREATION_TIME, FLAG_POSITION.CREATION_TIME + 8).getData();
+    }
+
+    public byte[] getModifiedTime() {
+        return view.subView(FLAG_POSITION.MODIFY_TIME, FLAG_POSITION.MODIFY_TIME + 8).getData();
+    }
+
 
     public enum ColorFlag {
         RED(0), BLACK(1);
