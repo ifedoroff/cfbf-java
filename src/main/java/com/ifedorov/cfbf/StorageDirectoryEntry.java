@@ -6,6 +6,7 @@ import com.google.common.collect.Sets;
 import com.ifedorov.cfbf.tree.Node;
 import com.ifedorov.cfbf.tree.NodeFactory;
 import com.ifedorov.cfbf.tree.RedBlackTree;
+import com.ifedorov.cfbf.tree.TreeBuilder;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -16,6 +17,8 @@ import java.util.stream.BaseStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import static com.ifedorov.cfbf.Utils.FREESECT_MARK_OR_NOSTREAM_INT;
+
 public class StorageDirectoryEntry extends DirectoryEntry {
 
 
@@ -25,19 +28,26 @@ public class StorageDirectoryEntry extends DirectoryEntry {
             return new DirectoryEntryNode(value, color);
         }
     };
-    protected final RedBlackDirectoryEntryTree tree = new RedBlackDirectoryEntryTree(NODE_FACTORY);
+    protected final RedBlackDirectoryEntryTree tree;
 
     public StorageDirectoryEntry(int id, DirectoryEntryChain directoryEntryChain, DataView view) {
         super(id, directoryEntryChain, view);
-        this.getChild().ifPresent(child -> tree.root(new DirectoryEntryNode(child, Node.Color.BLACK)));
+        tree = buildTree();
     }
 
-    public StorageDirectoryEntry(int id, String name, ColorFlag colorFlag, ObjectType objectType, DirectoryEntryChain directoryEntryChain, DataView view) {
-        super(id, name, colorFlag, objectType, directoryEntryChain, view);
+    private RedBlackDirectoryEntryTree buildTree() {
+        TreeBuilder treeBuilder = new TreeBuilder(NODE_FACTORY, new RedBlackDirectoryEntryTree(NODE_FACTORY));
+        this.getChild().ifPresent(directoryEntry -> {
+            treeBuilder.rootNode(directoryEntry, levelBuilder -> buildTreeLevel(directoryEntry, levelBuilder));
+        });
+        return (RedBlackDirectoryEntryTree) treeBuilder.build();
     }
 
-    public StorageDirectoryEntry(int id, String name, ColorFlag colorFlag, DirectoryEntryChain directoryEntryChain, DataView view) {
-        super(id, name, colorFlag, ObjectType.Storage, directoryEntryChain, view);
+    private void buildTreeLevel(DirectoryEntry parent, TreeBuilder.TreeLevel levelBuilder) {
+        parent.getLeftSibling()
+                .ifPresent(leftChild -> levelBuilder.left(leftChild, leftChild.getColorFlag().toNodeColor(), levelBuilder1 -> buildTreeLevel(leftChild, levelBuilder1)));
+        parent.getRightSibling()
+                .ifPresent(rightChild -> levelBuilder.right(rightChild, rightChild.getColorFlag().toNodeColor(), levelBuilder1 -> buildTreeLevel(rightChild, levelBuilder1)));
     }
 
     public class RedBlackDirectoryEntryTree extends RedBlackTree<DirectoryEntry, DirectoryEntryNode>{
@@ -55,7 +65,7 @@ public class StorageDirectoryEntry extends DirectoryEntry {
     }
 
     private void setChild(DirectoryEntry entry) {
-        view.subView(FLAG_POSITION.CHILD, FLAG_POSITION.CHILD + 4).writeAt(0, Utils.toBytesLE(entry.getId(), 4));
+        setChild(entry, view);
     }
 
     private <T extends DirectoryEntry> T addChild(DirectoryEntry entry) {
@@ -148,34 +158,6 @@ public class StorageDirectoryEntry extends DirectoryEntry {
         }
 
         @Override
-        public DirectoryEntryNode leftChild() {
-            DirectoryEntryNode leftChild = super.leftChild();
-            if(leftChild == null && this.value().getLeftSibling().isPresent()) {
-                DirectoryEntry directoryEntry = this.value().getLeftSibling().get();
-                leftChild = new DirectoryEntryNode(directoryEntry, directoryEntry.getColorFlag().toNodeColor());
-                super.leftChild(leftChild);
-            }
-            if(leftChild != null && leftChild.parent() == null) {
-                leftChild.parent(this);
-            }
-            return leftChild;
-        }
-
-        @Override
-        public DirectoryEntryNode rightChild() {
-            DirectoryEntryNode rightChild = super.rightChild();
-            if(rightChild == null && this.value().getRightSibling().isPresent()) {
-                DirectoryEntry directoryEntry = this.value().getRightSibling().get();
-                rightChild = new DirectoryEntryNode(directoryEntry, directoryEntry.getColorFlag().toNodeColor());
-                super.rightChild(rightChild);
-            }
-            if(rightChild != null && rightChild.parent() == null) {
-                rightChild.parent(this);
-            }
-            return rightChild;
-        }
-
-        @Override
         public void leftChild(DirectoryEntryNode leftChild) {
             super.leftChild(leftChild);
             value().setLeftSibling(leftChild == null ? null : leftChild.value());
@@ -217,6 +199,24 @@ public class StorageDirectoryEntry extends DirectoryEntry {
         public void invertColor() {
             super.invertColor();
             value().invertColor();
+        }
+    }
+
+    public static class Builder extends DirectoryEntry.Builder<StorageDirectoryEntry> {
+
+        public Builder(int id, DirectoryEntryChain directoryEntryChain, DataView view) {
+            super(id, directoryEntryChain, view);
+            super.objectType(ObjectType.Storage);
+        }
+
+        @Override
+        public DirectoryEntry.Builder<StorageDirectoryEntry> objectType(ObjectType type) {
+            throw new UnsupportedOperationException("already set in constructor");
+        }
+
+        @Override
+        public StorageDirectoryEntry build() {
+            return new StorageDirectoryEntry(id, directoryEntryChain, view);
         }
     }
 }

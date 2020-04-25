@@ -10,6 +10,7 @@ import java.util.LinkedList;
 import java.util.NoSuchElementException;
 
 import static com.ifedorov.cfbf.DirectoryEntry.UTF16_TERMINATING_BYTES;
+import static com.ifedorov.cfbf.RootStorageDirectoryEntry.NAME;
 
 public class DirectoryEntryChain {
 
@@ -70,16 +71,24 @@ public class DirectoryEntryChain {
             throw new IllegalStateException("Root Storage should be the first Directory Entry");
         }
         DataView view = getViewForDirectoryEntry();
-        RootStorageDirectoryEntry rootStorageDirectoryEntry = new RootStorageDirectoryEntry(0, this, view);
+        RootStorageDirectoryEntry rootStorageDirectoryEntry = new RootStorageDirectoryEntry.Builder(0, this, view)
+                .build();
         return rootStorageDirectoryEntry;
     }
 
     public StorageDirectoryEntry createStorage(String name, DirectoryEntry.ColorFlag colorFlag) {
-        return new StorageDirectoryEntry(directoryEntryCount, name, colorFlag, this, getViewForDirectoryEntry());
+        return new StorageDirectoryEntry.Builder(directoryEntryCount, this, getViewForDirectoryEntry())
+                .name(name)
+                .color(colorFlag)
+                .build();
     }
 
     public StreamDirectoryEntry createStream(String name, DirectoryEntry.ColorFlag colorFlag, byte[] data) {
-        StreamDirectoryEntry streamEntry = new StreamDirectoryEntry(directoryEntryCount, name, colorFlag, this, getViewForDirectoryEntry(), streamHolder);
+        StreamDirectoryEntry streamEntry =
+                new StreamDirectoryEntry.Builder(directoryEntryCount, this, getViewForDirectoryEntry(), streamHolder)
+                .name(name)
+                .color(colorFlag)
+                .build();
         if(data.length > 0) {
             streamEntry.setStreamData(data);
         }

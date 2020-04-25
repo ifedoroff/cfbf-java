@@ -1,30 +1,37 @@
 package com.ifedorov.cfbf.tree;
 
+import java.lang.reflect.InvocationTargetException;
+
 public class TreeBuilder<T extends Comparable<T>, N extends Node<N, T>> {
 
     private final NodeFactory<N, T> nodeFactory;
     private RedBlackTree<T, N> tree;
-    public TreeBuilder(NodeFactory<N, T> nodeFactory) {
-        this.tree = new RedBlackTree<>(nodeFactory);
+
+    public TreeBuilder(NodeFactory<N, T> nodeFactory, RedBlackTree<T, N> tree) {
         this.nodeFactory = nodeFactory;
+        this.tree = tree;
     }
 
-    public static TreeBuilder empty(NodeFactory nodeFactory) {
+    public TreeBuilder(NodeFactory<N, T> nodeFactory) {
+        this(nodeFactory, new RedBlackTree<>(nodeFactory));
+    }
+
+    public static <T extends Comparable<T>, N extends Node<N, T>> TreeBuilder<T, N> empty(NodeFactory<N, T> nodeFactory) {
         return new TreeBuilder(nodeFactory);
     }
 
-    public TreeBuilder rootNode(T value) {
+    public TreeBuilder<T, N> rootNode(T value) {
         return rootNode(value, levelBuilder -> {});
     }
 
-    public TreeBuilder rootNode(T value, NodeBuilder levelBuilder) {
-        N node = (N) new Node(value, Node.Color.BLACK);
+    public TreeBuilder<T, N> rootNode(T value, NodeBuilder<T, N> levelBuilder) {
+        N node = nodeFactory.create(value, Node.Color.BLACK);
         tree.root(node);
         levelBuilder.accept(new TreeLevel(node, nodeFactory));
         return this;
     }
 
-    public RedBlackTree build() {
+    public RedBlackTree<T, N> build() {
         return tree;
     }
 
@@ -38,27 +45,27 @@ public class TreeBuilder<T extends Comparable<T>, N extends Node<N, T>> {
             this.nodeFactory = nodeFactory;
         }
 
-        public void left(T value, Node.Color color, NodeBuilder levelBuilder) {
-            N node = (N) new Node(value, color);
+        public void left(T value, Node.Color color, NodeBuilder<T, N> levelBuilder) {
+            N node = nodeFactory.create(value, color);
             parent.leftChild(node);
-            levelBuilder.accept(new TreeLevel(node, nodeFactory));
+            levelBuilder.accept(new TreeLevel<T, N>(node, nodeFactory));
         }
 
         public void left(T value, Node.Color color) {
             left(value, color, levelBuilder -> {});
         }
 
-        public void right(T value, Node.Color color, NodeBuilder levelBuilder) {
-            N node = (N) new Node(value, color);
+        public void right(T value, Node.Color color, NodeBuilder<T, N> levelBuilder) {
+            N node = nodeFactory.create(value, color);
             parent.rightChild(node);
-            levelBuilder.accept(new TreeLevel(node, nodeFactory));
+            levelBuilder.accept(new TreeLevel<T, N>(node, nodeFactory));
         }
 
         public void right(T value, Node.Color color) {
             right(value, color, levelBuilder -> {});
         }
     }
-    public interface NodeBuilder {
-        void accept(TreeLevel levelBuilder);
+    public interface NodeBuilder<T extends Comparable<T>, N extends Node<N, T>> {
+        void accept(TreeLevel<T, N> levelBuilder);
     }
 }

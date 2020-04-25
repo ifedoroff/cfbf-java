@@ -21,7 +21,7 @@ public interface DataView {
     DataView fill(byte[] filler);
     default boolean isEmpty() {
         return getSize() == 0;
-    };
+    }
     byte[] readAt(int position, int length);
     void copyTo(OutputStream os);
 
@@ -125,7 +125,7 @@ public interface DataView {
         }
     }
 
-    public static class VariableSizeChunkedDataView implements DataView {
+    class VariableSizeChunkedDataView implements DataView {
 
         private final TreeMap<Integer, DataView> viewMap = new TreeMap<>();
         private int size;
@@ -333,7 +333,7 @@ public interface DataView {
         }
     }
 
-    static class ReferencingSubView implements DataView {
+    class ReferencingSubView implements DataView {
 
         private final int capacity;
         private final int start;

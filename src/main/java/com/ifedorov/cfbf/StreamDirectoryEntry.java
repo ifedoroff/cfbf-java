@@ -14,11 +14,6 @@ public class StreamDirectoryEntry extends DirectoryEntry {
         this.streamHolder = streamHolder;
     }
 
-    public StreamDirectoryEntry(int id, String name, ColorFlag colorFlag, DirectoryEntryChain directoryEntryChain, DataView view, StreamHolder streamHolder) {
-        super(id, name, colorFlag, ObjectType.Stream, directoryEntryChain, view);
-        this.streamHolder = streamHolder;
-    }
-
     public byte[] getStreamData() {
         if(hasStreamData() && getStreamSize() > 0) {
             return streamHolder.getStreamData(getStreamStartingSector(), getStreamSize());
@@ -62,5 +57,55 @@ public class StreamDirectoryEntry extends DirectoryEntry {
 
     public boolean hasStreamData() {
         return getObjectType() == ObjectType.Stream && !Utils.isEndOfChain(getStreamStartingSector());
+    }
+
+    public static class Builder extends DirectoryEntry.Builder<StreamDirectoryEntry> {
+
+        private final StreamHolder holder;
+
+        public Builder(int id, DirectoryEntryChain directoryEntryChain, DataView view, StreamHolder holder) {
+            super(id, directoryEntryChain, view);
+            this.holder = holder;
+            super.objectType(ObjectType.Stream);
+        }
+
+        @Override
+        public DirectoryEntry.Builder<StreamDirectoryEntry> name(String name) {
+            return super.name(name);
+        }
+
+        @Override
+        public DirectoryEntry.Builder<StreamDirectoryEntry> color(ColorFlag colorFlag) {
+            return super.color(colorFlag);
+        }
+
+        @Override
+        public DirectoryEntry.Builder<StreamDirectoryEntry> objectType(ObjectType type) {
+            throw new UnsupportedOperationException("already set in constructor");
+        }
+
+        @Override
+        public DirectoryEntry.Builder<StreamDirectoryEntry> leftSibling(DirectoryEntry entry) {
+            return super.leftSibling(entry);
+        }
+
+        @Override
+        public DirectoryEntry.Builder<StreamDirectoryEntry> rightSibling(DirectoryEntry entry) {
+            return super.rightSibling(entry);
+        }
+
+        @Override
+        public DirectoryEntry.Builder<StreamDirectoryEntry> child(DirectoryEntry entry) {
+            if(entry != null) {
+                throw new UnsupportedOperationException("Stream directory cannot have a child");
+            } else {
+                super.child(null);
+                return this;
+            }
+        }
+
+        public StreamDirectoryEntry build() {
+            return new StreamDirectoryEntry(id, directoryEntryChain, view, holder);
+        }
     }
 }

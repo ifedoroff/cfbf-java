@@ -15,10 +15,7 @@ import java.util.function.Consumer;
 public class CompoundFile {
 
     private final Header header;
-    private final DIFAT difat;
     private final Sectors sectors;
-    private final FAT fat;
-    private final MiniFAT miniFat;
     private final DirectoryEntryChain directoryEntryChain;
     private DataView dataView;
 
@@ -32,11 +29,11 @@ public class CompoundFile {
         this.header = new Header(dataView.subView(0, Header.HEADER_LENGTH));
         this.sectors = new Sectors(dataView, header);
         FATtoDIFATFacade faTtoDIFATFacade = new FATtoDIFATFacade();
-        difat = new DIFAT(sectors, header, faTtoDIFATFacade);
+        DIFAT difat = new DIFAT(sectors, header, faTtoDIFATFacade);
         faTtoDIFATFacade.setDifat(difat);
-        fat = new FAT(sectors, header, faTtoDIFATFacade);
+        FAT fat = new FAT(sectors, header, faTtoDIFATFacade);
         faTtoDIFATFacade.setFat(fat);
-        miniFat = new MiniFAT(sectors, header, fat);
+        MiniFAT miniFat = new MiniFAT(sectors, header, fat);
         MiniStreamRW miniStreamRW = new MiniStreamRW(miniFat, fat, getMiniStreamFirstSectorLocation(), getMiniStreamLength(), sectors, header);
         StreamRW listenableMiniStream = new StreamRW() {
             @Override

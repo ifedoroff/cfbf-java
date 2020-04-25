@@ -32,10 +32,13 @@ class StorageDirectoryEntryTest {
     @Test
     public void testAddChildren() {
 
-        RootStorageDirectoryEntry storage = new RootStorageDirectoryEntry(0, directoryEntryChain, DataView.from(Utils.copy(data)).subView(0, 128));
-        StreamDirectoryEntry child1 = new StreamDirectoryEntry(1, "a", DirectoryEntry.ColorFlag.RED, directoryEntryChain, DataView.from(Utils.copy(data)), streamHolder);
-        StreamDirectoryEntry child2 = new StreamDirectoryEntry(2, "ab", DirectoryEntry.ColorFlag.RED, directoryEntryChain, DataView.from(Utils.copy(data)), streamHolder);
-        StorageDirectoryEntry child3 = new StorageDirectoryEntry(3, "b", DirectoryEntry.ColorFlag.RED, directoryEntryChain, DataView.from(Utils.copy(data)));
+        RootStorageDirectoryEntry storage = new RootStorageDirectoryEntry.Builder(0, directoryEntryChain, DataView.from(Utils.copy(data)).subView(0, 128)).build();
+        StreamDirectoryEntry child1 = new StreamDirectoryEntry.Builder(1, directoryEntryChain, DataView.from(Utils.copy(data)).subView(0, 128), streamHolder)
+                .name("a").color(DirectoryEntry.ColorFlag.RED).build();
+        StreamDirectoryEntry child2 = new StreamDirectoryEntry.Builder(2, directoryEntryChain, DataView.from(Utils.copy(data)).subView(0, 128), streamHolder)
+                .name("ab").color(DirectoryEntry.ColorFlag.RED).build();
+        StorageDirectoryEntry child3 = new StorageDirectoryEntry.Builder(3, directoryEntryChain, DataView.from(Utils.copy(data)).subView(0, 128))
+                .name("b").color(DirectoryEntry.ColorFlag.RED).build();
         when(directoryEntryChain.createStream("a", DirectoryEntry.ColorFlag.RED, new byte[1])).thenReturn(child1);
         when(directoryEntryChain.createStream("ab", DirectoryEntry.ColorFlag.RED, new byte[1])).thenReturn(child2);
         when(directoryEntryChain.createStorage("b", DirectoryEntry.ColorFlag.RED)).thenReturn(child3);

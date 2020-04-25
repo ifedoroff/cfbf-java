@@ -25,7 +25,7 @@ class DirectoryEntryTest {
         DUMMY_DIRECTORY_ENTRY[DirectoryEntry.FLAG_POSITION.COLOR_FLAG] = (byte) DirectoryEntry.ColorFlag.BLACK.code();
     }
 
-    public static final byte[] dummyDirectoryEntry() {
+    public static byte[] dummyDirectoryEntry() {
         return Utils.copy(DUMMY_DIRECTORY_ENTRY);
     }
 

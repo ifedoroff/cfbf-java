@@ -4,8 +4,11 @@ import com.google.common.base.Strings;
 import com.google.common.base.Verify;
 import com.ifedorov.cfbf.tree.Node;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Optional;
 import java.util.function.Consumer;
+
+import static com.ifedorov.cfbf.Utils.FREESECT_MARK_OR_NOSTREAM_INT;
 
 public class DirectoryEntry implements Comparable<DirectoryEntry>{
 
@@ -50,21 +53,6 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
         setCreationTime(Utils.initializedWith(8, 0));
     }
 
-    protected DirectoryEntry(int id, String name, ColorFlag colorFlag, ObjectType objectType, DirectoryEntryChain directoryEntryChain, DataView view) {
-        this.id = id;
-        this.directoryEntryChain = directoryEntryChain;
-        this.view = view;
-        setObjectType(objectType);
-        setColorFlag(colorFlag);
-        int nameLength = name.length() * 2 + 2;
-        Verify.verify(nameLength >= 0 && nameLength <= ENTRY_NAME_MAXIMUM_LENGTH);
-        setDirectoryEntryName(name);
-        setLeftSibling(null);
-        setRightSibling(null);
-        view.subView(FLAG_POSITION.STREAM_SIZE, FLAG_POSITION.STREAM_SIZE + 8).writeAt(0, Utils.toBytesLE(0, 8));
-        setStreamStartingSector(Utils.ENDOFCHAIN_MARK_INT);
-    }
-
     @Override
     public int compareTo(DirectoryEntry o) {
         int result = Integer.compare(this.getDirectoryEntryName().length(), o.getDirectoryEntryName().length());
@@ -75,6 +63,10 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
     }
 
     protected void setRightSibling(DirectoryEntry rightSibling) {
+        setRightSibling(rightSibling, view);
+    }
+
+    private static void setRightSibling(DirectoryEntry rightSibling, DataView view) {
         if(rightSibling == null) {
             view.subView(FLAG_POSITION.RIGHT_SIBLING, FLAG_POSITION.RIGHT_SIBLING + 4).writeAt(0, Utils.FREESECT_MARK_OR_NOSTREAM);
         } else {
@@ -83,6 +75,10 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
     }
 
     protected void setLeftSibling(DirectoryEntry leftSibling) {
+        setLeftSibling(leftSibling, view);
+    }
+
+    private static void setLeftSibling(DirectoryEntry leftSibling, DataView view) {
         if(leftSibling == null) {
             view.subView(FLAG_POSITION.LEFT_SIBLING, FLAG_POSITION.LEFT_SIBLING + 4).writeAt(0, Utils.FREESECT_MARK_OR_NOSTREAM);
         } else {
@@ -90,7 +86,16 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
         }
     }
 
+    protected static void setChild(DirectoryEntry child, DataView view) {
+        int childPosition = child == null ? FREESECT_MARK_OR_NOSTREAM_INT : child.getId();
+        view.subView(FLAG_POSITION.CHILD, FLAG_POSITION.CHILD + 4).writeAt(0, Utils.toBytesLE(childPosition, 4));
+    }
+
     public void setDirectoryEntryName(String name) {
+        setDirectoryEntryName(this.view, name);
+    }
+
+    private static void setDirectoryEntryName(DataView view, String name) {
         if(Strings.isNullOrEmpty(name)) {
             throw new IllegalArgumentException("Directory Entry name should be non-null and non-empty string");
         }
@@ -129,6 +134,10 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
 
     private void setObjectType(ObjectType objectType) {
         this.objectType = objectType;
+        setObjectType(objectType, view);
+    }
+
+    private static void setObjectType(ObjectType objectType, DataView view) {
         view.subView(FLAG_POSITION.OBJECT_TYPE, FLAG_POSITION.OBJECT_TYPE +1).writeAt(0, new byte[]{(byte) objectType.code()});
     }
 
@@ -155,6 +164,10 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
     }
 
     public void setStreamStartingSector(int startingSector) {
+        setStreamStartingSector(startingSector, view);
+    }
+
+    private static void setStreamStartingSector(int startingSector, DataView view) {
         view.subView(FLAG_POSITION.STARTING_SECTOR_LOCATION, FLAG_POSITION.STARTING_SECTOR_LOCATION + 4).writeAt(0, Utils.toBytesLE(startingSector, 4));
     }
 
@@ -175,6 +188,10 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
 
     public void setColorFlag(ColorFlag colorFlag) {
         this.colorFlag = colorFlag;
+        setColorFlag(colorFlag, view);
+    }
+
+    private static void setColorFlag(ColorFlag colorFlag, DataView view) {
         view.subView(FLAG_POSITION.COLOR_FLAG, FLAG_POSITION.COLOR_FLAG +1).writeAt(0, new byte[]{(byte) colorFlag.code()});
     }
 
@@ -220,7 +237,7 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
 
         private int code;
 
-        private ColorFlag(int code) {
+        ColorFlag(int code) {
 
             this.code = code;
         }
@@ -253,7 +270,7 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
 
         private int code;
 
-        private ObjectType(int code) {
+        ObjectType(int code) {
 
             this.code = code;
         }
@@ -271,4 +288,54 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
             return code;
         }
     }
+
+    public abstract static class Builder<T extends DirectoryEntry> {
+        protected final int id;
+        protected final DirectoryEntryChain directoryEntryChain;
+        protected final DataView view;
+
+        public Builder(int id, DirectoryEntryChain directoryEntryChain, DataView view) {
+            this.id = id;
+            this.directoryEntryChain = directoryEntryChain;
+            this.view = view;
+            view.subView(FLAG_POSITION.STREAM_SIZE, FLAG_POSITION.STREAM_SIZE + 8).writeAt(0, Utils.toBytesLE(0, 8));
+            setStreamStartingSector(Utils.ENDOFCHAIN_MARK_INT, view);
+            leftSibling(null);
+            rightSibling(null);
+            child(null);
+        }
+
+        public Builder<T> name(String name) {
+            setDirectoryEntryName(view, name);
+            return this;
+        }
+
+        public Builder<T> color(ColorFlag colorFlag) {
+            setColorFlag(colorFlag, view);
+            return this;
+        }
+
+        public Builder<T> objectType(ObjectType type) {
+            setObjectType(type, view);
+            return this;
+        }
+
+        public Builder<T> leftSibling(DirectoryEntry entry) {
+            setLeftSibling(entry, view);
+            return this;
+        }
+
+        public Builder<T> rightSibling(DirectoryEntry entry) {
+            setRightSibling(entry, view);
+            return this;
+        }
+
+        public Builder<T> child(DirectoryEntry entry) {
+            setChild(entry, view);
+            return this;
+        }
+
+        public abstract T build();
+    }
+
 }

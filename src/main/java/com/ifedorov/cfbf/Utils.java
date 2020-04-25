@@ -6,6 +6,7 @@ import com.google.common.collect.FluentIterable;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.UUID;
@@ -89,7 +90,7 @@ public class Utils {
         if(bytes.length == 2) {
             return (((bytes[1] & 0xFF) << 8) | (bytes[0] & 0xFF));
         } else if(bytes.length == 4) {
-            return ((bytes[0] & 0xFF) << 0) |
+            return (bytes[0] & 0xFF) |
                     ((bytes[1] & 0xFF) << 8) |
                     ((bytes[2] & 0xFF) << 16) |
                     ((bytes[3] & 0xFF) << 24);
@@ -177,11 +178,7 @@ public class Utils {
     public static String toUTF16String(byte[] bytes)  {
         StringBuilder builder = new StringBuilder(bytes.length/2);
         for (int i = 0; i < bytes.length; i+=2) {
-            try {
-                builder.append(new String(new byte[]{bytes[i+1], bytes[i]}, "UTF-16BE"));
-            } catch (UnsupportedEncodingException e) {
-                throw new RuntimeException(e);
-            }
+            builder.append(new String(new byte[]{bytes[i+1], bytes[i]}, StandardCharsets.UTF_16BE));
         }
         return builder.toString();
     }
@@ -190,11 +187,7 @@ public class Utils {
         byte[] bytes = new byte[string.length() * 2];
         for (int i = 0; i < string.length(); i++) {
             byte[] charBytes = new byte[0];
-            try {
-                charBytes = string.substring(i, i + 1).getBytes("UTF-16BE");
-            } catch (UnsupportedEncodingException e) {
-                throw new RuntimeException(e);
-            }
+            charBytes = string.substring(i, i + 1).getBytes(StandardCharsets.UTF_16BE);
             if(charBytes.length != 2) {
                 throw new IllegalStateException("Each character in UTF-16 encoding should be presented with 2 bytes");
             }
@@ -214,11 +207,7 @@ public class Utils {
     }
 
     public static String toUTF8WithNoTrailingZeros(byte[] bytes) {
-        try {
-            return new String(Utils.toUTF16String(removeTrailingZeros(bytes)).getBytes(), "UTF8");
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
+        return new String(Utils.toUTF16String(removeTrailingZeros(bytes)).getBytes(), StandardCharsets.UTF_8);
     }
 
     public static byte[] removeTrailingZeros(byte[] bytes) {
