@@ -110,6 +110,9 @@ public class StorageDirectoryEntry extends DirectoryEntry {
     public void eachChild(Consumer<DirectoryEntry> consumer, Predicate<DirectoryEntry> stopPredicate) {
         Set<Integer> visitedNodes = Sets.newHashSet();
         DirectoryEntryNode currentNode = tree.root();
+        if(currentNode == null) {
+            return;
+        }
         while(true) {
             if(currentNode != null && !visitedNodes.contains(currentNode.value().getId())) {
                 visitedNodes.add(currentNode.value().getId());
