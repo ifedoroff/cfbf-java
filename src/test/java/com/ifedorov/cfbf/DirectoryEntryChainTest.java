@@ -68,8 +68,16 @@ class DirectoryEntryChainTest {
 
     @Test
     void testCreateStorageDirectory() {
+        Sector zeroSector = Sector.from(DataView.from(new byte[512]), 1);
         Sector firstSector = Sector.from(DataView.from(new byte[512]), 1);
+        DirectoryEntry.setLeftSibling(zeroSector.subView(0, 128), 1);
+        DirectoryEntry.setLeftSibling(zeroSector.subView(128, 256), 2);
+        DirectoryEntry.setLeftSibling(zeroSector.subView(256, 384), 3);
+        DirectoryEntry.setLeftSibling(zeroSector.subView(384, 512), 4);
+        DirectoryEntry.setLeftSibling(zeroSector.subView(0, 128), 5);
+        DirectoryEntry.setLeftSibling(zeroSector.subView(128, 256), 6);
         firstSector.subView(0, 256).writeAt(0, Utils.initializedWith(256, 1));
+        when(sectors.sector(0)).thenReturn(zeroSector);
         when(sectors.sector(1)).thenReturn(firstSector);
         when(fat.buildChain(anyInt()))
                 .thenReturn(Lists.newArrayList(0, 1));
@@ -83,8 +91,12 @@ class DirectoryEntryChainTest {
     @Test
     void testCreateStorageDirectoryWithNewSectorAllocation() {
         Sector zeroSector = Sector.from(DataView.from(new byte[512]), 0);
+        DirectoryEntry.setLeftSibling(zeroSector.subView(0, 128), 1);
+        DirectoryEntry.setLeftSibling(zeroSector.subView(128, 256), 2);
+        DirectoryEntry.setLeftSibling(zeroSector.subView(256, 384), 3);
+        DirectoryEntry.setLeftSibling(zeroSector.subView(384, 512), Utils.FREESECT_MARK_OR_NOSTREAM_INT);
         Sector firstSector = Sector.from(DataView.from(new byte[512]), 1);
-        zeroSector.subView(0, 512).writeAt(0, Utils.initializedWith(512, 1));
+//        zeroSector.subView(0, 512).writeAt(0, Utils.initializedWith(512, 1));
         when(sectors.sector(0)).thenReturn(zeroSector);
         when(sectors.allocate()).thenReturn(firstSector);
         when(fat.buildChain(anyInt()))

@@ -32,16 +32,28 @@ public class DirectoryEntryChain {
 
     private void readDirectoryEntryCount() {
         if(!sectorChain.isEmpty()) {
-            directoryEntryCount = (sectorChain.size() - 1) * 4;
-            Sector lastDirectoryEntrySector = sectors.sector(sectorChain.get(sectorChain.size() - 1));
-            int directoriesInSector;
-            for (directoriesInSector = 4; directoriesInSector > 0; directoriesInSector--) {
-                int sectorStart = (directoriesInSector - 1) * 128;
-                if(!Arrays.equals(UTF16_TERMINATING_BYTES, lastDirectoryEntrySector.subView(sectorStart, sectorStart + 2).getData())) {
-                    break;
+            int maxDirectoryEntryPosition = -1;
+            for (Integer sectorPosition : sectorChain) {
+                Sector sector = sectors.sector(sectorPosition);
+                for (int i = 0; i < 4; i++) {
+                    DataView directoryEntryView = sector.subView(i * 128, (i + 1) * 128);
+                    int leftSiblingPosition = DirectoryEntry.getLeftSiblingPosition(directoryEntryView);
+                    int rightSiblingPosition = DirectoryEntry.getRightSiblingPosition(directoryEntryView);
+                    maxDirectoryEntryPosition = Math.max(maxDirectoryEntryPosition, leftSiblingPosition);
+                    maxDirectoryEntryPosition = Math.max(maxDirectoryEntryPosition, rightSiblingPosition);
                 }
             }
-            directoryEntryCount += directoriesInSector;
+            directoryEntryCount = maxDirectoryEntryPosition + 1;
+//            directoryEntryCount = (sectorChain.size() - 1) * 4;
+//            Sector lastDirectoryEntrySector = sectors.sector(sectorChain.get(sectorChain.size() - 1));
+//            int directoriesInSector;
+//            for (directoriesInSector = 4; directoriesInSector > 0; directoriesInSector--) {
+//                int sectorStart = (directoriesInSector - 1) * 128;
+//                if(!Arrays.equals(UTF16_TERMINATING_BYTES, lastDirectoryEntrySector.subView(sectorStart, sectorStart + 2).getData())) {
+//                    break;
+//                }
+//            }
+//            directoryEntryCount += directoriesInSector;
         }
     }
 

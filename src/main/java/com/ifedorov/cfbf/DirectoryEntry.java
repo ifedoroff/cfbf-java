@@ -4,7 +4,6 @@ import com.google.common.base.Strings;
 import com.google.common.base.Verify;
 import com.ifedorov.cfbf.tree.Node;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -74,6 +73,10 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
         }
     }
 
+    public static void setRightSibling(DataView view, int rightSibling) {
+        view.subView(FLAG_POSITION.RIGHT_SIBLING, FLAG_POSITION.RIGHT_SIBLING + 4).writeAt(0, Utils.toBytesLE(rightSibling, 4));
+    }
+
     protected void setLeftSibling(DirectoryEntry leftSibling) {
         setLeftSibling(leftSibling, view);
     }
@@ -84,6 +87,10 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
         } else {
             view.subView(FLAG_POSITION.LEFT_SIBLING, FLAG_POSITION.LEFT_SIBLING + 4).writeAt(0, Utils.toBytesLE(leftSibling.getId(), 4));
         }
+    }
+
+    public static void setLeftSibling(DataView view, int leftSibling) {
+        view.subView(FLAG_POSITION.LEFT_SIBLING, FLAG_POSITION.LEFT_SIBLING + 4).writeAt(0, Utils.toBytesLE(leftSibling, 4));
     }
 
     protected static void setChild(DirectoryEntry child, DataView view) {
@@ -147,6 +154,10 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
     }
 
     private int getLeftSiblingPosition() {
+        return getLeftSiblingPosition(this.view);
+    }
+
+    public static int getLeftSiblingPosition(DataView view) {
         return Utils.toInt(view.subView(FLAG_POSITION.LEFT_SIBLING, FLAG_POSITION.LEFT_SIBLING + 4).getData());
     }
 
@@ -156,6 +167,10 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
     }
 
     private int getRightSiblingPosition() {
+        return getRightSiblingPosition(this.view);
+    }
+
+    public static int getRightSiblingPosition(DataView view) {
         return Utils.toInt(view.subView(FLAG_POSITION.RIGHT_SIBLING, FLAG_POSITION.RIGHT_SIBLING + 4).getData());
     }
 
