@@ -98,6 +98,10 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
         view.subView(FLAG_POSITION.CHILD, FLAG_POSITION.CHILD + 4).writeAt(0, Utils.toBytesLE(childPosition, 4));
     }
 
+    public static void setChild(DataView view, int position) {
+        view.subView(FLAG_POSITION.CHILD, FLAG_POSITION.CHILD + 4).writeAt(0, Utils.toBytesLE(position, 4));
+    }
+
     public void setDirectoryEntryName(String name) {
         setDirectoryEntryName(this.view, name);
     }
