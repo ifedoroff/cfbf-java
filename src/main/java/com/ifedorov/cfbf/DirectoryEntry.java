@@ -136,6 +136,10 @@ public class DirectoryEntry implements Comparable<DirectoryEntry>{
     }
 
     protected int getChildPosition() {
+        return getChildPosition(this.view);
+    }
+
+    public static int getChildPosition(DataView view) {
         return Utils.toInt(view.subView(FLAG_POSITION.CHILD, FLAG_POSITION.CHILD + 4).getData());
     }
 

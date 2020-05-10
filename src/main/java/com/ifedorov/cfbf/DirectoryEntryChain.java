@@ -39,21 +39,13 @@ public class DirectoryEntryChain {
                     DataView directoryEntryView = sector.subView(i * 128, (i + 1) * 128);
                     int leftSiblingPosition = DirectoryEntry.getLeftSiblingPosition(directoryEntryView);
                     int rightSiblingPosition = DirectoryEntry.getRightSiblingPosition(directoryEntryView);
+                    int childPosition = DirectoryEntry.getChildPosition(directoryEntryView);
                     maxDirectoryEntryPosition = Math.max(maxDirectoryEntryPosition, leftSiblingPosition);
                     maxDirectoryEntryPosition = Math.max(maxDirectoryEntryPosition, rightSiblingPosition);
+                    maxDirectoryEntryPosition = Math.max(maxDirectoryEntryPosition, childPosition);
                 }
             }
             directoryEntryCount = maxDirectoryEntryPosition + 1;
-//            directoryEntryCount = (sectorChain.size() - 1) * 4;
-//            Sector lastDirectoryEntrySector = sectors.sector(sectorChain.get(sectorChain.size() - 1));
-//            int directoriesInSector;
-//            for (directoriesInSector = 4; directoriesInSector > 0; directoriesInSector--) {
-//                int sectorStart = (directoriesInSector - 1) * 128;
-//                if(!Arrays.equals(UTF16_TERMINATING_BYTES, lastDirectoryEntrySector.subView(sectorStart, sectorStart + 2).getData())) {
-//                    break;
-//                }
-//            }
-//            directoryEntryCount += directoriesInSector;
         }
     }
 
